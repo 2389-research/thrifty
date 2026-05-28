@@ -1,0 +1,6 @@
+{
+  "name": "atelier",
+  "description": "Tiered-delegation task execution - a strong model (Opus) plans every cross-cutting decision, a fast cheap model (Haiku) executes the bulk in parallel, and a mid model (Sonnet) verifies each unit against explicit acceptance criteria and applies bounded tiered fixes. General-purpose: code and non-code tasks.",
+  "version": "0.1.0",
+  "commands": []
+}
