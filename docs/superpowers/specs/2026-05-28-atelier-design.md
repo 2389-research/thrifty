@@ -1,7 +1,8 @@
 # atelier — Tiered-Delegation Skill Family
 
 **Date:** 2026-05-28
-**Status:** Design (pending spec review + implementation plan)
+**Status:** Implemented (v0.1.0) and dogfooded — see "Validating the skill itself".
+Spec synced with the decomposition-modes addition.
 
 ## Summary
 
@@ -67,6 +68,38 @@ Because Haiku is genuinely capable (unlike the tiny local model
 
 Briefs are "enough detail," not "every byte." The skill states this explicitly so
 the architect does not over-specify.
+
+## Decomposition modes
+
+"One unit = one file" is only one way to split work. The architect chooses a
+**decomposition mode** based on how cohesive the final artifact must be — how
+seamlessly the pieces must read as one. The mode is recorded in `CONTRACT.md` and
+governs how the orchestrator dispatches.
+
+| Mode | Units relate by | Dispatch | Use when |
+|------|-----------------|----------|----------|
+| **partition** | each owns a separate region/file; architect concatenates fragments | parallel | outputs are cleanly separable — code files, doc sections, dungeon rooms, independent transforms |
+| **relay** | each agent continues the *same* artifact, receiving its current state + a brief for the next segment | sequential | one flowing artifact where each part depends on the voice/flow of the previous — a prose chapter written beat by beat |
+| **layered** | role-specialized *passes* over the *whole* artifact (draft → continuity edit → polish) | sequential | one seamless voice, but multiple specialized lenses applied in turn |
+
+In all three modes the contract's job is identical — pin the *seams* (voice, POV,
+character state, canon, timeline, interfaces) so the pieces/passes cohere. What
+changes is whether a unit owns a *region*, a *segment*, or a *pass*, and whether
+dispatch is parallel (partition) or sequential (relay, layered). For relay and
+layered the dependency graph is fully linear and the artifact is edited in place,
+so the integration step is a no-op (the shared artifact *is* the output). Modes can
+also nest — e.g. partition a document into chapters, then relay *within* a chapter.
+
+### The single-artifact / degenerate case
+
+atelier's machinery exists only to keep *multiple* units consistent. If the task is
+**one indivisible artifact**:
+
+- with no need for tiering → don't use atelier; just do it.
+- but you still want the cost/quality tiering → run a *degenerate plan*: **skip
+  `CONTRACT.md`** (there are no cross-unit seams), write a single brief with
+  acceptance criteria, dispatch one executor, one checker. You keep "Haiku drafts,
+  Sonnet verifies" without the orchestration overhead.
 
 ## Skill family (4 skills)
 
@@ -246,19 +279,25 @@ Criteria become the binding contract for that unit for the rest of the run.
 ## Flow
 
 1. **Frame** — architect (Opus) clarifies the goal and explores context.
-2. **Plan** (`atelier-plan`) — architect writes `CONTRACT.md`, decomposes into units
-   with a dependency graph, and writes each `BRIEF` with acceptance criteria.
-   Proposes criteria to the user (unless already specified).
-3. **Dispatch** (`atelier-execute`) — for each unit whose dependencies are
-   satisfied, the architect dispatches a Haiku executor subagent. Independent
-   units **fan out in parallel**; dependent units wait for their inputs. Each
-   executor executes its brief and reports results against the criteria.
+2. **Plan** (`atelier-plan`) — architect chooses a decomposition mode, writes
+   `CONTRACT.md`, decomposes into units with a dependency graph, and writes each
+   `BRIEF` with acceptance criteria. Proposes criteria to the user (unless already
+   specified). (Single-artifact tasks take the degenerate path: no contract.)
+3. **Dispatch** (`atelier-execute`) — mode-dependent:
+   - **partition** — for each unit whose dependencies are satisfied, dispatch a
+     Haiku executor; independent units **fan out in parallel**.
+   - **relay / layered** — dispatch **one unit at a time, in order**; each executor
+     reads the shared artifact's current state and extends it (relay) or applies its
+     pass (layered). Check each before dispatching the next so continuity errors are
+     caught before they compound.
+   Each executor reports results against the criteria.
 4. **Check** (`atelier-check`) — as each unit finishes, a Sonnet checker
    verifies it against its acceptance criteria and applies the tiered fix loop.
 5. **Integrate** — once all units pass, the architect does a final coherence pass
-   (do the units fit together as a whole?) and reports outcome + cost summary
-   (approximate strong-model tokens saved vs. doing everything in the main
-   session).
+   (do the units fit together as a whole?). For partition this includes assembling
+   the fragments; for relay/layered the artifact is already whole. Then reports
+   outcome + cost summary (approximate strong-model tokens saved vs. doing
+   everything in the main session).
 
 ## Tiered fix loop (escalation)
 
@@ -357,17 +396,34 @@ guarantee termination.
 
 ## Validating the skill itself
 
-Dogfood on two real tasks before declaring done:
+Dogfooded on three real tasks (artifacts captured in `examples/`), each run with
+real Haiku executor + Sonnet checker subagents via the `Agent` `model` override:
 
-1. A **code-heavy** task (e.g. add a feature across a few files with tests as the
-   runnable criteria).
-2. A **general / non-code** task (e.g. a short multi-source research brief with
-   assertional criteria).
+1. **code-heavy** (`examples/jsonl-stats-code/`) — 3-unit Python package, partition
+   mode, runnable criteria; 16 tests pass.
+2. **non-code, assertional** (tool-explainer) — parallel sections + dependent
+   synthesis; assembled cited document.
+3. **creative writing** (`examples/saltrest-dnd/`) — 4-unit playable D&D module,
+   partition mode, assertional criteria modeled on the simmer-sdk D&D rubric
+   (narrative_tension, player_agency, specificity, hook_clarity).
 
-Confirm, for each: (a) Haiku can execute purely from the brief, (b) the Sonnet
-checker catches a deliberately planted defect, and (c) at least one escalation
-tier fires correctly. Record approximate strong-model token savings vs. doing the
-task entirely in the main session.
+Results against the three validation conditions:
+
+- **(a) Haiku executes purely from the brief** — confirmed across all units.
+- **(b) the checker catches defects** — confirmed both by injection (a planted
+  `field_coverage` bug, caught + surgically fixed) and naturally (the D&D checkers
+  caught four defects — three heading errors and a real canon contradiction — that
+  every executor had self-reported as passing).
+- **(c) escalation tiers fire** — tier-1 surgical fired repeatedly with the
+  regression guard; a contradictory brief correctly triggered a **tier-3** `brief`
+  diagnosis (checker refused to corrupt working code).
+
+Empirical echo of the simmer-sdk D&D experiment: cheap models execute well from a
+strong plan but cannot police their own cross-cutting consistency — which is
+precisely what the pinned contract + independent checker tiers exist to provide.
+
+Outstanding: a **relay-mode** validation run (both partition and degenerate paths
+are exercised; relay/layered are designed but not yet dogfooded).
 
 ## Documented extension (not built in v1, YAGNI)
 
