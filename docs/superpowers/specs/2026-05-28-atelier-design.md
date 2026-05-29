@@ -422,8 +422,13 @@ Empirical echo of the simmer-sdk D&D experiment: cheap models execute well from 
 strong plan but cannot police their own cross-cutting consistency — which is
 precisely what the pinned contract + independent checker tiers exist to provide.
 
-Outstanding: a **relay-mode** validation run (both partition and degenerate paths
-are exercised; relay/layered are designed but not yet dogfooded).
+**Relay mode** also validated (`examples/saltrest-scene-relay/`): a continuous
+prose scene written by four sequential Haiku agents, each appending to one shared
+`SCENE.md` from the scene-so-far. Single voice/POV held across all handoffs; the
+check-before-continue discipline caught canon drift (two forbidden named characters
+in Beat 2) and fixed it before downstream beats could build on it. Outstanding:
+**layered** mode (draft → continuity edit → polish passes) is designed but not yet
+dogfooded.
 
 ## Documented extension (not built in v1, YAGNI)
 

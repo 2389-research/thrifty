@@ -32,5 +32,24 @@ checkers independently caught four real defects — three heading-level errors a
 surgically. That gap between executor self-report and independent verification is
 exactly what the checker tier exists to close.
 
-> Note: these used the **partition** mode (separable sections). For a continuous
-> prose chapter, prefer **relay** or **layered** mode — see the main README.
+> Note: the two examples above used the **partition** mode (separable sections).
+
+## `saltrest-scene-relay/` — creative writing (relay mode, one shared artifact)
+
+The same Saltrest world, but the artifact is a single continuous prose scene
+(`SCENE.md`) — the literary cold-open, third-person-limited on Mother Vell. This is
+**relay mode**: four Haiku agents wrote it *sequentially*, each reading the
+scene-so-far and appending the next beat in the established voice (dawn dread → the
+bone-catch → the strangers → the hook). No fragments, no merge — the file *is* the
+output.
+
+The architect's call here matters: for cohesive prose you do **not** partition by
+topic (that produces seams). You pin a single POV/voice in the contract and relay
+beat by beat, checking each before the next runs. The `LEDGER.md` shows why
+check-before-continue is the point: Beat 2 introduced two forbidden named fishermen
+(Kess, Tam); the checker caught and anonymized them *before* Beat 3 could build on
+the drift. (Contrast: in partition mode such an error would surface only at final
+assembly, after everything downstream had already committed to it.)
+
+> For one seamless voice via multiple specialized passes (draft → continuity edit →
+> polish) instead of sequential beats, use **layered** mode — see the main README.
