@@ -71,6 +71,19 @@ You are NOT byte-pinning for a weak local model. Most of the brief's value is th
 *acceptance criteria* + the *contract reference*; the approach is a short nudge, not
 an essay.
 
+**Style: dense bullets and shorthand, not prose.** Write telegraphic lines, not
+sentences — `Output: src/x.js` · `Uses loadRecords/report (contract seam)` ·
+`(runnable) node --test test/x.test.js passes`. No preamble, no explanation, no
+full paragraphs. (Measured: a bullet brief runs identically to a prose one at ~30%
+fewer words.)
+
+**What sets the floor.** After cutting prose, a brief's length is driven by its
+*number of acceptance criteria* (~irreducible: each is both the spec and what the
+checker scores), not by style. So the way to a shorter brief is fewer *genuinely
+distinct* criteria — but never merge two real checks into one vague one (that just
+makes them un-checkable and pushes cost to the fix loop). A 4–6-criterion unit is a
+~120–150-word brief; a 12-criterion unit is ~250. That's expected, not bloat.
+
 Write **concrete acceptance criteria** (the checker scores against these, not
 vibes). Tag each **runnable** (a command/test) or **assertional** (a checkable
 statement). Prefer runnable wherever the unit produces code.
