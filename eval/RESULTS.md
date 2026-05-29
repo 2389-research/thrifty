@@ -62,3 +62,27 @@ offset justifying the cost.
 | 3 | | | | | |
 
 Held-out check (run once at end, simmer never saw it): 03-jqlite — cost ___, tests ___.
+
+## Task-02 architecture sweep (medium, gate-verified, all on subscription/Opus)
+Testing every who-does-what configuration against direct:
+
+| config | Opus | Sonnet | Haiku | fix | TOTAL | vs direct |
+|--------|------|--------|-------|-----|-------|-----------|
+| subagent split-tier        | (in 1.86) | (subagents) | (subagents) | — | $1.856 | 2.9× |
+| Opus-writes-all dispatch    | ~0.68 | — | ~0.27 | — | $0.956 | 1.51× |
+| thin-Opus + review (Sonnet writes contracts) | 0.349 | 0.111 | 0.254 | — | $0.713 | 1.12× |
+| **architect+fire** (Opus agenda → script: Sonnet contracts → Haiku exec → fix) | 0.312 | 0.134 | 0.342 | 0.032 | $0.819 | 1.29× |
+| **direct (single Opus)** | 0.634 | — | — | — | **$0.634** | 1.0× |
+
+**Verdict:** no atelier config beats direct for self-contained, design-light code at
+this scale. Two floors make it structural: (1) Opus *architecting* alone ≈ half of
+direct (~$0.31 — a minimal Opus session's baseline context re-read over a few turns is
+irreducible); (2) the script's PAID tier calls add ~$0.5 on top. Opus-architect +
+paid-script ≈ $0.7–0.8 > direct $0.63.
+
+**The swing factor is the executor's price.** Haiku execution is ~40% of the total.
+local_code_gen beats direct because its executor is FREE local qwen ($0); with a free
+executor this run would be ~$0.44 < direct. So tiered delegation pays when: the
+executor is free/near-free (local model), execution volume dwarfs the Opus-architect
+floor, or work is repeated / exceeds one context. For paid-Haiku small builds: use
+Opus/Sonnet directly.
