@@ -43,18 +43,33 @@ You expand within-unit detail. You do **not** re-decide cross-unit matters:
 Within those limits you have full authority: the approach, the within-unit
 structure, the local decisions, and the exact acceptance criteria are yours.
 
-## 3. Author the brief (pass 1)
+## 3. Write the brief (pass 1)
 
-Produce `briefs/UNIT-NNN.md` following `../atelier/templates/BRIEF.template.md`:
-objective · inputs/context (exact files + the upstream symbols/sections it
-consumes) · approach · constraints · acceptance criteria · dependencies.
+Your output is **instructions for a capable executor (Haiku), not a document.**
+Write the *leanest* brief that lets a strong Haiku execute this unit correctly —
+nothing more. Follow `../atelier/templates/BRIEF.template.md`: objective ·
+inputs/context (exact files + the upstream symbols/sections it consumes) · approach ·
+constraints · acceptance criteria · dependencies.
 
-**Right-size the approach to what Haiku needs — this is your judgment call.**
+**The length benchmark — internalize this.** The brief Haiku needs is the same
+brief no matter who writes it. A strong architect writing directly to Haiku would
+keep it tight; **so should you.** If your brief is longer than what a sharp engineer
+would hand a capable colleague to do this one unit, you are padding — cut it. Aim to
+write *no more than* that; shorter is better. Do **not** "expand" the spec into a
+fuller document; translate it into the minimal instruction set.
+
+**Right-size the approach (default terse):**
 - Pattern-heavy / well-trodden work (standard CRUD, common algorithms, idiomatic
-  UI): keep the approach terse. Name the interface to hit and let the acceptance
-  criteria steer. Do not narrate every step — Haiku knows the pattern.
-- Subtle / unusual / easy-to-get-wrong work: spell out the load-bearing steps and
-  the gotchas. Detail is cheap insurance exactly where Haiku is likely to slip.
+  UI, ordinary prose): a few lines. Name the interface/shape to hit and let the
+  acceptance criteria steer. Haiku knows the pattern — do not narrate steps it can
+  infer, do not restock detail already in the contract.
+- Subtle / unusual / easy-to-get-wrong work: spell out *only* the load-bearing steps
+  and the specific gotcha. Detail is insurance exactly where Haiku would slip — and
+  nowhere else.
+
+You are NOT byte-pinning for a weak local model. Most of the brief's value is the
+*acceptance criteria* + the *contract reference*; the approach is a short nudge, not
+an essay.
 
 Write **concrete acceptance criteria** (the checker scores against these, not
 vibes). Tag each **runnable** (a command/test) or **assertional** (a checkable
@@ -68,14 +83,19 @@ may not skip, rename, or weaken it — it is the contract's, not yours.
 
 ## 4. Audit your own draft (pass 2)
 
-Re-read the draft against the contract and fix:
-- any place you restated or contradicted a contract-pinned shape/convention
-  (replace with a reference to the contract);
+Re-read the draft and fix:
+- **Cut every word Haiku doesn't need.** Delete restatement of the contract (replace
+  with a reference), narration of steps a capable model infers, hedging, throat-
+  clearing, and anything you wrote to look thorough. This is the main edit — be
+  ruthless. If a sentence wouldn't change what Haiku produces, it goes.
 - any acceptance criterion that is vague, unverifiable, or untagged;
-- any within-unit ambiguity a Haiku executor could plausibly resolve the wrong way;
-- approach that is over-long for pattern-heavy work, or too thin for subtle work.
+- any within-unit ambiguity a Haiku executor could plausibly resolve the wrong way
+  (keep these — they're the load-bearing parts);
+- approach too thin for genuinely subtle work (rare — usually the problem is the
+  opposite).
 
-Apply the fixes in place. The audited version is the final brief.
+Apply the fixes in place. The audited version is the final brief — and it should be
+shorter than your draft, not longer.
 
 ## 5. Report (your final message — the return value)
 
