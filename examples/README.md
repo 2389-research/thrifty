@@ -35,7 +35,9 @@ parallel Haiku executors per wave (1: math+scoring · 2: entities+effects ·
 Sonnet checker re-ran `node --test`/`node --check` independently and passed; the
 pinned interfaces meant the parallel modules assembled without integration breakage.
 
-Play it: open `asteroids-game/index.html` in a browser.
+Play it: `cd asteroids-game && ./serve.sh` then open http://localhost:8777
+(ES modules require an HTTP origin — opening `index.html` via `file://` is blocked
+by browser CORS; see `asteroids-game/README.md`).
 Verify: `cd asteroids-game && node --test` → 66 tests pass.
 
 ## `saltrest-dnd/` — creative writing (partition mode, assertional criteria)
