@@ -72,6 +72,36 @@ priced in, compare `Total cost` as the bottom line. You may run arms in parallel
 separate windows (each session tracks its own usage) — but never two arms in one
 session.
 
+### Automated alternative — headless (verified)
+Instead of reading `/status` by hand, run each problem headless and parse the JSON:
+```
+./run.sh tasks/01-wordfreq.md atelier opus     # -> prints total_cost_usd (subagents included)
+./run.sh tasks/01-wordfreq.md direct  sonnet
+```
+`claude -p "<prompt>" --output-format json --model <m> --permission-mode bypassPermissions`
+returns `total_cost_usd` for the run, which **includes subagent cost** (verified: a
+1-subagent run cost ~2.5x a no-subagent run). One invocation per problem → one number
+→ your N per-task costs, scriptable. Caveats: (a) the headless JSON has aggregate
+`usage` but **no per-model split** — for the per-tier breakdown use interactive
+`/status`; (b) `total_cost_usd` is a client-side estimate, fine for relative A/B;
+(c) **always re-run the gate yourself** after — don't trust the run's self-report.
+
+### Fairness — what atelier's cost includes (and why that's correct)
+An atelier run's cost includes Claude **reading the atelier skill** + each subagent's
+**~41k system-prompt startup** (a no-op subagent costs ~$0.05). That is a *real,
+unavoidable* cost of choosing atelier, and the direct arm genuinely doesn't pay it —
+so **include it; don't discount it.** The asymmetry is the point: this fixed overhead
+is ~constant regardless of task size, so it correctly makes atelier look bad on small
+tasks and wash out on large ones — which is the size-scaling result we want. Excluding
+it would hide atelier's real weakness.
+
+Nuance: the **fresh-cold-session-per-task** protocol is the *worst case* for atelier
+(every subagent pays cold cache-creation; a warm long-lived deployment would
+cache-*read* the system prompt + skill text ~10x cheaper). But the direct arm also
+runs cold-fresh, so cold-vs-cold is apples-to-apples and atelier wears its full
+overhead — the honest bar. (Optional: measure a near-empty atelier invocation once to
+report task cost with vs without the fixed overhead.)
+
 ### Granularity you can and can't get (verified)
 - **Per task** — yes: fresh-session `Total cost` (includes subagents; they bill to
   the session).
