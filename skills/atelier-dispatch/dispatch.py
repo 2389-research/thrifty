@@ -14,9 +14,19 @@ strong model need only write agenda.md first (optional) and fire this once.
 """
 import json, subprocess, re, os, sys, pathlib, concurrent.futures, glob
 
-def call_model(prompt, model):
-    p = subprocess.run(["claude","-p",prompt,"--model",model,"--bare","--output-format","json"],
-                       capture_output=True, text=True, timeout=900)
+# --bare strips the system prompt; we supply a tiny focused one per role so the small
+# model has format/behavior discipline without the ~40k Claude Code harness.
+SYS_EXEC = ('You are an expert programmer. You write EXACTLY ONE file from the brief, '
+            'honoring the contract. Output ONLY that file wrapped as '
+            '<FILE path="relative/path">...</FILE> — no prose, no markdown fences, '
+            'nothing before or after the FILE block. Be terse and correct.')
+SYS_PLAN = ('You are a software architect. Output ONLY the requested files, each wrapped '
+            'as <FILE path="...">...</FILE>, nothing else. Be precise and lean.')
+
+def call_model(prompt, model, system=None):
+    cmd = ["claude","-p",prompt,"--model",model,"--bare","--output-format","json"]
+    if system: cmd += ["--system-prompt", system]
+    p = subprocess.run(cmd, capture_output=True, text=True, timeout=900)
     try:
         d = json.loads(p.stdout); return d.get("result",""), float(d.get("total_cost_usd",0) or 0)
     except Exception:
@@ -46,7 +56,7 @@ def plan():
         "(the executor is a small model and does best on a single focused file). If a "
         "feature needs a source file and a test file, that's TWO units.\n\n"
         + (f"AGENDA:\n{agenda}\n\n" if agenda else "") + f"TASK SPEC:\n{spec}\n")
-    text, cost = call_model(prompt, "sonnet")
+    text, cost = call_model(prompt, "sonnet", system=SYS_PLAN)
     files = write_files(text)
     json.dump({"plan_cost_usd": round(cost,5), "files": files}, open("plan_manifest.json","w"), indent=2)
     print(f"[plan] sonnet ${cost:.4f} -> {files}")
@@ -57,15 +67,11 @@ def execute():
     units = [json.loads(l) for l in open("units.jsonl") if l.strip()]
     pending = {u["id"]: u for u in units}; done, manifest, total = set(), [], 0.0
     def prompt_for(u):
-        return (f"You are an expert programmer writing ONE file. Honor the CONTRACT (it pins "
-            f"cross-unit interfaces). Output ONLY that one file, wrapped EXACTLY as "
-            f'<FILE path="rel/path.ext">\n...\n</FILE> — no prose, no explanation, no fences, '
-            f"nothing before or after the FILE block. Be terse.\n\n"
-            f"CONTRACT:\n{contract}\n\nYOUR UNIT BRIEF:\n{u.get('brief','')}\n")
+        return f"CONTRACT:\n{contract}\n\nYOUR UNIT BRIEF (write exactly one file):\n{u.get('brief','')}\n"
     while pending:
         ready = [u for u in pending.values() if all(d in done for d in u.get("deps", []))] or list(pending.values())
         with concurrent.futures.ThreadPoolExecutor(max_workers=8) as ex:
-            futs = {ex.submit(call_model, prompt_for(u), u.get("tier","haiku")): u for u in ready}
+            futs = {ex.submit(call_model, prompt_for(u), u.get("tier","haiku"), SYS_EXEC): u for u in ready}
             for fut in concurrent.futures.as_completed(futs):
                 u = futs[fut]; text, cost = fut.result(); total += cost
                 files = write_files(text)
@@ -86,7 +92,8 @@ def fix(gate_out):
     prompt = ("Some tests are failing. Diagnose and fix. Output corrected versions of ONLY the files "
         "that need changing, each wrapped <FILE path=\"...\">...</FILE>, no prose.\n\n"
         f"GATE OUTPUT (failures):\n{gate_out}\n\nCURRENT FILES:\n{blob}\n")
-    text, cost = call_model(prompt, "sonnet")
+    text, cost = call_model(prompt, "sonnet",
+        system='Output ONLY corrected files, each wrapped as <FILE path="...">...</FILE>, nothing else.')
     changed = write_files(text)
     print(f"[fix] sonnet ${cost:.4f} -> changed {changed}")
     return cost
