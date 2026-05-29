@@ -75,3 +75,24 @@ assembly, after everything downstream had already committed to it.)
 
 > For one seamless voice via multiple specialized passes (draft → continuity edit →
 > polish) instead of sequential beats, use **layered** mode — see the main README.
+
+## `jsonl-stats-split/` & `saltrest-dnd-split/` — the SPLIT planning tier + adaptive verify
+
+The same two task types, re-run through the **split** tier (Opus director writes a
+lean contract + terse unit specs; **Sonnet brief-writers** expand them in parallel;
+Haiku executes) with **adaptive verification** (gate-run for runnable criteria,
+Sonnet read only for assertional ones). They demonstrate the two verify paths:
+
+- **`jsonl-stats-split/`** (code) — lean ~200-word contract (vs ~1150 for the direct
+  asteroids contract), 3 Sonnet briefs, 3 Haiku executors, 12 tests pass. Because
+  every criterion is runnable, the **orchestrator ran the gates and dispatched zero
+  Sonnet checkers** — the cheap path. Run: `cd jsonl-stats-split && node --test`.
+- **`saltrest-dnd-split/`** (creative) — lean canon contract, 4 Sonnet briefs
+  (calibrated: clock spelled out, prose terse), 4 Haiku executors. Criteria are
+  assertional, so **Sonnet checkers read and judged** — and caught 3 real defects
+  (an invented NPC, a role mislabel, an over-length section), all tier-1 surgical.
+  Cross-unit canon held (clock numbers match dungeon↔resolution). `ADVENTURE.md` is
+  the assembled module.
+
+Together they show the split tier works on both task types, and that verification
+diverges by criterion type — gates-only for code, full reads for prose.
