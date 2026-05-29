@@ -29,11 +29,28 @@ did the task's gate pass.
 | 05-comparison-brief | non-code | direct-opus | opus | | | checklist | |
 | 05-comparison-brief | non-code | atelier-split | opus+sonnet+haiku | | | checklist | |
 
-### Read-out (fill after the table)
-- atelier-split vs direct-opus, $ by size: small ___% · medium ___% · large ___%
-- atelier-split vs direct-sonnet (the honest bar), $ by size: ___ / ___ / ___
-- Does the win grow with size? (the core hypothesis): __________
-- Any quality gaps (tasks where a method failed tests): __________
+### Verdict (gate-verified, all on Opus, headless cold-fresh)
+
+| size | units | direct | atelier-dispatch (orch + disp) | gap | tests |
+|------|-------|--------|-------------------------------|-----|-------|
+| small  (01) | 3 | $0.499 | $0.624 ($0.446 + $0.178) | 1.25× | both pass |
+| medium (02) | 9 | $0.634 | $0.956 ($0.681 + $0.274) | 1.51× | both 29/29 |
+| large  (03) | 9 | $0.783 | $1.165 ($0.909 + $0.255) | 1.49× | direct 50, disp 48 |
+| (01 subagent-atelier, for reference) | 3 | — | $1.856 | 3.7× | 12/12 |
+
+**Direct wins at every size; the crossover never happens.** The dispatch architecture
+fixed the subagent catastrophe (3.7× → ~1.5×) but does not beat direct for this task
+class. Root cause: by medium/large the **orchestrator alone costs more than direct's
+entire run** ($0.68 > $0.63; $0.91 > $0.78) — it must do the same architectural
+thinking as direct, expressed as a contract + N briefs (more output than direct's
+code), re-read each turn; the cheap dispatch is pure addition on top.
+
+Atelier-style tiering only pays when execution dominates planning: huge-volume
+low-reasoning codegen, a FREE executor (local_code_gen wins because its executor is
+$0 local qwen, not paid Haiku), context-exceeding work, or repeated runs. For
+self-contained design-heavy/code-light builds at this scale: **use Opus/Sonnet
+directly.** Quality was equal across methods (all gates pass), so there is no quality
+offset justifying the cost.
 
 ## Experiment 2 — simmer refinement trajectory
 
