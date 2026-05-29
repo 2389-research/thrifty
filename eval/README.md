@@ -48,14 +48,29 @@ Run the *same task spec* three ways so we triangulate quality vs cost:
 ### Procedure (per run)
 ```
 1. mkdir a fresh empty dir; cd into it; copy in the task spec.
-2. Start a fresh Claude Code session there (set the model per the method).
-3. Give it the task (verbatim spec, same for all three methods).
-4. Let it finish. Run the task's test command yourself; record pass/fail.
-5. Run /cost. Record total $ and tokens (it includes any subagents).
-6. Record into RESULTS.md.
+2. Start a fresh Claude Code session there. Set the model for this arm:
+     /model opus    -> direct-opus, and atelier (Opus is the orchestrator)
+     /model sonnet  -> direct-sonnet
+3. Give it the task (verbatim spec, same text for every method):
+     direct:   "Build this. Run the tests and make them pass."
+     atelier:  "Use the atelier skill in split tier to build this."
+4. Let it finish. Run/confirm the task's gate yourself (node --test / pytest) -> pass/fail.
+5. Run /status. From the SESSION block, record:
+     - Total cost ($)                         <- the headline
+     - Usage by model (each row): input / output / cache read / cache write / $
+       (atelier shows opus+sonnet+haiku rows = the tier split; direct = one row)
+     - Total duration (wall + API)            <- optional; speed axis
+6. Write the row into RESULTS.md. Discard the session.
 ```
-(If you prefer one session: run `/cost` *before* and *after* and record the delta —
-but fresh sessions are cleaner.)
+**Fresh session = no "before" snapshot needed** — it starts at $0, so the session
+totals ARE the run's totals. Claude can't read its own `/status` (user command), so
+you record it; Claude *can* run the tests itself.
+
+**Notes:** `Total cost` already nets out cache discounts (cache read ~10x cheaper);
+atelier shows heavy cache read (subagents re-read the contract) — that's fine, it's
+priced in, compare `Total cost` as the bottom line. You may run arms in parallel in
+separate windows (each session tracks its own usage) — but never two arms in one
+session.
 
 ### What we're testing
 - **Does atelier-split beat direct-opus on cost** at equal quality (tests pass)?
