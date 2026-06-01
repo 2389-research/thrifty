@@ -1,7 +1,7 @@
 {
   "name": "atelier",
   "description": "Tiered-delegation task execution - a planner model (Sonnet) turns a spec into a contract that pins every cross-cutting decision plus self-contained sprints, a fast cheap model (Haiku) executes the bulk in parallel and self-verifies against the gate, and a scoped fix runs only on failure. Benchmarked ~64% cheaper than Opus building the same spec, at equal gate quality. General-purpose: code and non-code tasks.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": {
     "name": "2389 Research",
     "email": "michael@2389.ai"
