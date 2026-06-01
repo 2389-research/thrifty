@@ -14,6 +14,9 @@ export function createShip(x = WIDTH / 2, y = HEIGHT / 2) {
 
 export function createAsteroid(x, y, size = 'large') {
   const radius = ASTEROID[size];
+  if (radius === undefined) {
+    throw new Error(`Unknown asteroid size: ${size} (expected one of ${Object.keys(ASTEROID).join(', ')})`);
+  }
   // Random small drift velocity
   const driftAngle = Math.random() * Math.PI * 2;
   const driftSpeed = Math.random() * 50 + 25; // 25-75 units/sec

@@ -50,6 +50,10 @@ export function wrap(pos, bounds) {
   let x = pos.x;
   let y = pos.y;
 
+  if (!bounds || bounds.width <= 0 || bounds.height <= 0) {
+    return { x, y }; // invalid/zero bounds — nothing to wrap against; avoid an infinite loop
+  }
+
   // Wrap x coordinate toroidally
   while (x < 0) {
     x += bounds.width;

@@ -45,7 +45,7 @@ outputs go to disk, not into your context.
      briefs, then `kind:"generate"` sprints (tier haiku) that consume them. For small
      jobs, just write the briefs inline here and skip the brief pass.
 4. **Dispatch** — run the script ONCE via Bash:
-   ```
+   ```bash
    python3 <this-skill-dir>/dispatch.py
    ```
    It loops the sprints, makes the bare calls (parallel within a dep wave), writes files

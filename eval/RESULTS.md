@@ -83,6 +83,7 @@ above as the settled conclusion.
 | 03-jqlite | large | atelier-split | | | | | | | |
 
 ### Generality probes (vary stack/type; run once each, not on the size curve)
+
 | Task | Type | Method | Model(s) | Total $ | Total tokens | Quality (gate) | Notes |
 |------|------|--------|----------|---------|--------------|----------------|-------|
 | 04-pysummary | Python code | direct-opus | opus | | | pytest | |
@@ -200,7 +201,7 @@ size. (Still paid-Haiku; a free local executor would push both rows toward ~$0 e
 Every task: one Sonnet plan (contract+units) handed identically to both arms; atelier =
 `dispatch.py` execute on the cheap tier, direct = Opus implements the same plan headless;
 both gate-verified externally. Planning excluded from both (shared/sunk). Plan costs
-were 01 $0.038, 02 (prior) , 03 $0.151, 04 $0.061, 05 $0.026 of Sonnet — paid either way.
+were 01 $0.038, 02 ≈$0.11 (from a prior session), 03 $0.151, 04 $0.061, 05 $0.026 of Sonnet — paid either way.
 
 | task | size/type | atelier (cheap tier) | direct (Opus) | savings | quality |
 |------|-----------|----------------------|---------------|---------|---------|

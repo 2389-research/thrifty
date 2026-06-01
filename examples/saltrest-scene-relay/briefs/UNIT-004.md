@@ -20,7 +20,7 @@ on a final ominous sea image.
   cackling villainy. No headings, no second person, no mechanics. Canon names only.
 
 ## Acceptance criteria
-- [ ] (assertional) appends to SCENE.md without altering prior beats; ~150–280 words for this beat
+- [ ] (assertional) appends to SCENE.md without altering prior beats; ~180–260 words for this beat
 - [ ] (assertional, continuity) same POV/tense/voice; continues from Vell resolving to speak; consistent with Beats 1–3
 - [ ] (assertional, content) Vell conveys her refusal of the water, Mayor Halrik's route to the north shore, and a wary mention of Coria Sleet (rope/lanterns)
 - [ ] (assertional, handoff) turns the strangers toward Kelpwater Cove; closes on a final ominous sea image

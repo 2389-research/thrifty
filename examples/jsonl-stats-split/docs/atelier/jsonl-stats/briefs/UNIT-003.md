@@ -16,7 +16,7 @@ Produce `src/cli.js` (the CLI entry point) and `test/cli.test.js`.
 ## Approach
 
 `src/cli.js`:
-- Import `loadRecords` and `report` from `../src/stats.js` (ESM, `.js` extension).
+- Import `loadRecords` and `report` from `./stats.js` (same dir, ESM, `.js` extension).
 - Read `process.argv[2]` as the file path. If absent or the file does not exist, print a short error to stderr and `process.exit(1)`.
 - Call `loadRecords(path)`, pass the result to `report(records)`, then print the result as formatted JSON (`JSON.stringify(result, null, 2)`) to stdout. Exit 0.
 
