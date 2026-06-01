@@ -74,7 +74,7 @@ atelier generalizes three existing systems to arbitrary tasks:
 Where `local_code_gen` writes 600-line byte-pinned contracts for a tiny local
 model (qwen3.6 / gemma), atelier deliberately sits well above that floor. **Haiku
 is far stronger**, so the contract pins only what is *cross-sprint AND genuinely
-ambiguous* — the seams, not the interiors. Since Opus/Sonnet output is the
+ambiguous* — the seams, not the interiors. Since the planner's (Sonnet) output is the
 expensive part, terseness is the goal: pin the few decisions two capable sprints
 would otherwise diverge on, and let Haiku infer the rest.
 
@@ -83,26 +83,27 @@ would otherwise diverge on, and let Haiku infer the rest.
 | Skill | Role | Model | Runs as |
 |-------|------|-------|---------|
 | `atelier` | orchestrator | — | this session |
-| `atelier-plan` | director's planning discipline | Opus | this session |
+| `atelier-plan` | director's planning discipline | Sonnet | this session |
 | `atelier-brief` | expand a unit spec into a brief *(split tier)* | Sonnet | dispatched subagent |
 | `atelier-execute` | execute one unit | Haiku | dispatched subagent |
 | `atelier-check` | verify + fix one unit | Sonnet | dispatched subagent |
 
 ## Planning tiers (who writes the briefs)
 
-- **direct** — Opus writes the contract *and* every brief. Fewest moving parts, one
-  translation boundary. Best for **few sprints / subtle, correctness-critical work**.
-- **split** — Opus (director) writes the contract + terse unit specs; **Sonnet**
-  brief-writers expand them in parallel (mirrors `local_code_gen`'s
-  Opus-contract → Sonnet-sprint flow). The bulky brief-writing drops to the
-  5×-cheaper tier and Opus's context stays lean. Best for **many sprints (≳ 6) /
-  mechanical briefs / scale**.
-- **hybrid** — Opus writes the 1–2 subtle sprints' briefs, Sonnet the routine rest.
+- **direct** — the architect writes the contract *and* every brief. Fewest moving
+  parts, one translation boundary. Best for **few sprints / subtle,
+  correctness-critical work**.
+- **split** — the architect (director) writes the contract + terse unit specs;
+  parallel **Sonnet** brief-writers expand them (mirrors `local_code_gen`'s
+  contract → sprint flow). Brief-writing runs in parallel and the architect's context
+  stays lean. Best for **many sprints (≳ 6) / mechanical briefs / scale**.
+- **hybrid** — the architect writes the 1–2 subtle sprints' briefs, delegates the routine rest.
 
 Rough rule: direct below ~5 sprints, split above — but it's per-task, and the subtle
-sprints can stay direct even in a split run. Authority follows the tier: Opus owns
-the contract (cross-sprint), the brief-writer owns its unit (within-sprint), so a
-within-sprint fix routes to cheap Sonnet and only contract defects reach Opus.
+sprints can stay direct even in a split run. Authority follows the tier: the architect
+owns the contract (cross-sprint), the brief-writer owns its unit (within-sprint), so a
+within-sprint fix stays with a Sonnet brief-writer and only contract defects reach the
+architect.
 
 ## Usage
 
@@ -168,7 +169,7 @@ scripts + captured data are in [`experiments/`](experiments/README.md).
   `contract.md` + `sprints.jsonl`, one cached Haiku agent builds + self-fixes, scoped
   Sonnet patch if needed. ~64% cheaper than Opus at equal gate quality. This is the
   architecture diagrammed at the top.
-- **Subagent substrate (richer, pricier)** — the `atelier-*` skills above (Opus architect
+- **Subagent substrate (richer, pricier)** — the `atelier-*` skills above (Sonnet architect
   → parallel Haiku executor subagents → Sonnet checker). More expensive in the bake-off
   (per-subagent harness + orchestrator context re-read); reach for it only when you need
   per-sprint *parallel* verification. Still uses "unit/brief" terminology internally.

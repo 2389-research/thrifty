@@ -3,7 +3,7 @@ name: atelier-dispatch
 description: >
   Lean tiered-build orchestrator (JSONL-dispatch architecture). Use for "atelier
   fast / lean / dispatch", or a multi-sprint build where cost matters. The architect
-  (Opus) writes a contract + a sprints.jsonl and calls a dispatch SCRIPT that loops
+  (Sonnet) writes a contract + a sprints.jsonl and calls a dispatch SCRIPT that loops
   cheap bare model calls (claude -p --bare, subscription, no API key) to write each
   sprint to disk — NO subagents. The orchestrator never ingests sprint outputs, only a
   manifest, so its context stays tiny. Then it runs the gate and surgical-fixes.

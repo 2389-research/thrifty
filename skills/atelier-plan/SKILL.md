@@ -1,7 +1,7 @@
 ---
 name: atelier-plan
 description: >
-  Planning discipline for atelier, run by the architect (Opus) itself. Decomposes
+  Planning discipline for atelier, run by the architect (Sonnet) itself. Decomposes
   a task into units, writes CONTRACT.md (cross-unit decisions + dependency graph),
   one self-contained BRIEF per unit with concrete acceptance criteria, and
   initializes the LEDGER. Invoked by the atelier orchestrator during the Plan step.
@@ -59,19 +59,18 @@ Prefer fewer, well-bounded units over many tiny ones — each dispatch has overh
 ## 1b. Choose a planning tier (direct vs split)
 
 Independently of the decomposition mode, decide **who writes the per-unit briefs**.
-This trades Opus output tokens (expensive) against an extra tier + a translation
-boundary.
+This trades the architect's own output + context against an extra tier + a
+translation boundary.
 
-- **direct** — you (Opus) write the contract AND every brief (this skill, steps
-  2–5 below). One translation boundary (you → executor). Best for **few units**,
+- **direct** — you (the architect) write the contract AND every brief (this skill,
+  steps 2–5 below). One translation boundary (you → executor). Best for **few units**,
   **subtle/high-coupling briefs**, or correctness-critical work where your judgment
   must reach the brief intact.
-- **split** — you (Opus, the *director*) write the contract + a **terse unit spec**
-  per unit, then **stop**. The orchestrator dispatches Sonnet `atelier-brief`
-  writers (in parallel, one per unit) to expand each spec into a full brief. The
-  bulky brief-writing drops to the 5×-cheaper tier and your context stays lean.
-  Best for **many units (≳ 6)** with **mechanical / well-trodden briefs**, or when
-  running at scale.
+- **split** — you (the architect / *director*) write the contract + a **terse unit
+  spec** per unit, then **stop**. The orchestrator dispatches parallel Sonnet
+  `atelier-brief` writers (one per unit) to expand each spec into a full brief. The
+  bulky brief-writing runs in parallel and your context stays lean. Best for **many
+  units (≳ 6)** with **mechanical / well-trodden briefs**, or when running at scale.
 
 You may also go **hybrid**: write the 1–2 subtle units' briefs yourself and leave
 the routine ones to the split tier. Record the chosen tier in `CONTRACT.md`.
@@ -117,8 +116,8 @@ strength**:
   both cross-unit AND genuinely ambiguous** — the few decisions where two capable
   units would otherwise diverge. Everything Haiku can reasonably infer, leave out.
 
-Because Opus/Sonnet output tokens are the expensive part, **terseness is the goal,
-not thoroughness.** When in doubt, write less and let the acceptance criteria catch
+Because the architect's and checker's (Sonnet) output tokens are the expensive part,
+**terseness is the goal, not thoroughness.** When in doubt, write less and let the acceptance criteria catch
 the rare miss — a cheap checker catch beats expensive over-specification on every
 unit.
 
