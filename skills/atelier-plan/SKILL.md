@@ -56,6 +56,30 @@ operates on the same artifact). Record the chosen mode in `CONTRACT.md`.
 
 Prefer fewer, well-bounded units over many tiny ones — each dispatch has overhead.
 
+## 1b. Choose a planning tier (direct vs split)
+
+Independently of the decomposition mode, decide **who writes the per-unit briefs**.
+This trades Opus output tokens (expensive) against an extra tier + a translation
+boundary.
+
+- **direct** — you (Opus) write the contract AND every brief (this skill, steps
+  2–5 below). One translation boundary (you → executor). Best for **few units**,
+  **subtle/high-coupling briefs**, or correctness-critical work where your judgment
+  must reach the brief intact.
+- **split** — you (Opus, the *director*) write the contract + a **terse unit spec**
+  per unit, then **stop**. The orchestrator dispatches Sonnet `atelier-brief`
+  writers (in parallel, one per unit) to expand each spec into a full brief. The
+  bulky brief-writing drops to the 5×-cheaper tier and your context stays lean.
+  Best for **many units (≳ 6)** with **mechanical / well-trodden briefs**, or when
+  running at scale.
+
+You may also go **hybrid**: write the 1–2 subtle units' briefs yourself and leave
+the routine ones to the split tier. Record the chosen tier in `CONTRACT.md`.
+
+**In split tier, you do steps 2 + 3-split + 5 below and STOP** (the contract, the
+terse unit specs, and the ledger — *not* the full briefs). In direct tier you do
+all of steps 2–5.
+
 ## 2. Write CONTRACT.md
 
 Use `../atelier/templates/CONTRACT.template.md`. This is the cross-unit surface.
@@ -78,12 +102,64 @@ Use `../atelier/templates/CONTRACT.template.md`. This is the cross-unit surface.
 | Terminology fixed to one meaning | prose phrasing inside one unit's output |
 | The dependency graph + ordering | a unit's internal step order |
 
-**Calibrate down.** Reference systems like `local_code_gen` write 600-line
-byte-pinned contracts because their executor is a tiny local model. Haiku is
-capable — pin the seams, not the interiors. Over-specifying wastes your tokens and
-insults the executor's competence.
+### Calibrate to the executor — and Haiku is strong
 
-## 3. Write one BRIEF per unit
+This is the governing principle, and it controls your token budget. The
+exhaustiveness of a contract should scale **inversely with the executor's
+strength**:
+
+- `local_code_gen` writes 600-line, byte-pinned contracts (every field, a
+  cross-module test on every edge, "what fails without this" on every convention)
+  because its executor is a **tiny local model (qwen3.6 / gemma)** that infers
+  nothing.
+- **atelier's executor is Haiku — far stronger.** Haiku fills obvious fields,
+  follows idiom, and handles ordinary ambiguity on its own. So **pin only what is
+  both cross-unit AND genuinely ambiguous** — the few decisions where two capable
+  units would otherwise diverge. Everything Haiku can reasonably infer, leave out.
+
+Because Opus/Sonnet output tokens are the expensive part, **terseness is the goal,
+not thoroughness.** When in doubt, write less and let the acceptance criteria catch
+the rare miss — a cheap checker catch beats expensive over-specification on every
+unit.
+
+Two cheap habits worth keeping (they remove ambiguity without bulk):
+- **Make the call on genuine forks.** Where a cross-unit decision is truly
+  ambiguous, commit to one answer rather than "X or Y" — but only for decisions
+  that actually cross a boundary. Don't adjudicate within-unit trivia.
+- **Name shared shapes once.** Give a shared type/interface once so units agree on
+  it; you need not enumerate every obvious field — Haiku fills those. Spell a field
+  set out only when getting it wrong would silently break a consumer.
+
+**Cross-module tests are an opt-in tool, not a mandate.** For most edges, pinning
+the shared interface is enough for Haiku. Reach for a required cross-module test
+(a named test in the consumer that feeds a *real* upstream value through the API)
+only on a **genuinely fragile seam** — one where signature drift would slip past
+unit-level tests. One or two across a whole project, not one per edge.
+
+## 3-split (split tier only): Write terse UNIT-SPECS, then stop
+
+If you chose the **split** tier, do NOT write full briefs. Instead write
+`UNIT-SPECS.md` — one terse block per unit (the analog of `local_code_gen`'s
+`sprint_descriptions.jsonl`) that a Sonnet brief-writer will expand. Each block:
+
+- **id + title + objective** (1–2 sentences) and **owned files/outputs** + **deps**.
+- **Symbols it defines** — by NAME (reference shared shapes in the contract; don't
+  restate them).
+- **Consumes** — the upstream symbols/sections it depends on.
+- **Criteria-intent** — what "done" means at a high level, and any validation
+  command. The brief-writer turns this into concrete tagged criteria.
+- *(only if the contract pins a cross-module test for an incoming edge)* note it so
+  the brief-writer surfaces it. Most units won't have one.
+
+Keep these terse — a few lines each. The point of split tier is that *you* write
+little and Sonnet expands; don't pre-write the brief here.
+
+Use `../atelier/templates/UNIT-SPEC.template.md`. Then go to step 5 (ledger) and
+stop — the orchestrator dispatches the Sonnet brief-writers. **Steps 3–4 below are
+the brief-writers' job in split tier (they run `atelier-brief`); they are YOUR job
+only in direct tier.**
+
+## 3. Write one BRIEF per unit  *(direct tier)*
 
 Use `../atelier/templates/BRIEF.template.md`. Each brief is **self-contained**: an
 executor reads the contract + this brief and nothing else.
@@ -127,10 +203,13 @@ counters at 0, with the dependency column filled from the graph.
 
 ## Output of this step
 
-When done you have, in `docs/atelier/<task-slug>/`:
-- `CONTRACT.md` with the dependency graph,
-- `briefs/UNIT-001.md` … one per unit, each with acceptance criteria,
+In `docs/atelier/<task-slug>/`:
+- `CONTRACT.md` with the dependency graph and the chosen modes/tier,
 - `LEDGER.md` initialized,
+- **direct tier:** `briefs/UNIT-NNN.md` … one per unit, each with acceptance
+  criteria (you wrote them); confirm criteria with the user unless pre-specified.
+- **split tier:** `UNIT-SPECS.md` with one terse block per unit (you wrote these);
+  the briefs do **not** exist yet — the orchestrator dispatches Sonnet
+  `atelier-brief` writers to produce them, and criteria are confirmed after that.
 
-and you have confirmed the acceptance criteria with the user (unless they were
-already specified). Return control to the orchestrator for dispatch.
+Return control to the orchestrator for the dispatch phase.

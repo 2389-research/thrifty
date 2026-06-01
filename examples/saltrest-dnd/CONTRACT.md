@@ -55,7 +55,7 @@ other units must remain consistent with it:
 - Architect assembles `ADVENTURE.md` from the four fragments at integration.
 
 ## Dependency graph
-```
+```text
 UNIT-001, UNIT-002, UNIT-003   (independent — run in parallel)
               ↓
 UNIT-004                        (resolution references hook, NPC motives, and the clock)

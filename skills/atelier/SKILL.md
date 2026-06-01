@@ -18,7 +18,7 @@ it correctly**. You (Opus, the architect) do the thinking that genuinely needs a
 strong model — decomposition, cross-cutting decisions, defining what "done" means,
 and strategic fixes. Everything else is pushed down to cheaper, faster models.
 
-```
+```text
 architect (Opus, you)   plan: contract + briefs + acceptance criteria
         │
         ▼
@@ -52,12 +52,15 @@ anyway), or for trivial tasks where the planning overhead exceeds the work.
 
 | Role | Model | Who | Does |
 |------|-------|-----|------|
-| **architect** | Opus 4.8 | you, this session | plan, decide cross-unit, integrate, replan |
+| **architect / director** | Opus 4.8 | you, this session | plan, decide cross-unit, integrate, replan |
+| **brief-writer** *(split tier only)* | Sonnet 4.6 | dispatched subagent | expand one terse unit spec into a full brief |
 | **executor** | Haiku 4.5 | dispatched subagent | execute one brief |
-| **checker** | Sonnet 4.6 | dispatched subagent | verify + fix one unit |
+| **checker** | Sonnet 4.6 | dispatched subagent | judge + fix a unit — *only when a gate fails or there are assertional criteria* |
 
 **Dispatch mechanism:** the `Agent` tool's `model` parameter. Dispatch executors
-with `model: "haiku"` and the checker with `model: "sonnet"`. You are already Opus.
+with `model: "haiku"`, brief-writers and checkers with `model: "sonnet"`. You are
+already Opus. The brief-writer tier exists only in **split** planning tier — in
+direct tier you write the briefs yourself.
 
 ## Artifacts
 
@@ -79,14 +82,35 @@ haven't looked at. Choose a `<task-slug>` and create the working directory.
 
 ### Step 2 — Plan
 Invoke **`atelier-plan`** (you run this yourself; it is your planning discipline).
-It first picks a **decomposition mode** (see below), then produces `CONTRACT.md`,
-the unit decomposition with a dependency graph, and one `briefs/UNIT-NNN.md` per
-unit — each ending in **acceptance criteria**. Propose the inferred criteria to the
-user in one message and let them adjust, unless the user already specified them
-(sufficiency-check skip). Initialize `LEDGER.md` with every unit `pending`.
+It picks a **decomposition mode** and a **planning tier**, then produces
+`CONTRACT.md`, the dependency graph, and the briefs (direct) or terse unit specs
+(split). Initialize `LEDGER.md` with every unit `pending`. Criteria are confirmed
+with the user (unless pre-specified) once briefs exist.
 
-**Calibration:** pin cross-unit decisions exhaustively; write within-unit steps
-only to the depth Haiku needs. Briefs are "enough detail," not "every byte."
+**Calibration (the cost lever):** the executor is Haiku — far stronger than the
+tiny local models the `local_code_gen` discipline was built for. Pin only what is
+**cross-unit AND genuinely ambiguous**; let Haiku infer the rest. Opus/Sonnet
+output is the expensive part, so **terse beats thorough** — a cheap checker catch
+is better than over-specifying every unit.
+
+**Planning tier** — who writes the briefs (Step 2b):
+- **direct** — Opus writes the contract AND every brief. Best for few units, subtle
+  briefs, correctness-critical work. (No Step 2b.)
+- **split** — Opus writes the contract + terse `UNIT-SPECS.md` and stops; the
+  orchestrator dispatches Sonnet brief-writers (Step 2b). Best for many units (≳ 6)
+  with mechanical briefs, or at scale — the bulky writing drops to the 5×-cheaper
+  tier and Opus stays lean. Hybrid (Opus writes the subtle units' briefs, Sonnet
+  the rest) is allowed.
+
+### Step 2b — Dispatch brief-writers (split tier only)
+For each unit, dispatch a **Sonnet** `atelier-brief` writer. These are independent
+(each needs only the contract + its unit spec), so **dispatch them in parallel**
+(one message, multiple `Agent(model:"sonnet")` calls). Each expands its terse spec
+into `briefs/UNIT-NNN.md` with right-sized approach + concrete criteria, with
+within-unit authority only. If a brief-writer returns an `escalation` (a cross-unit
+problem in the contract/spec), that's yours to resolve — fix the contract/spec and
+re-dispatch that writer. Once briefs exist, confirm criteria with the user (unless
+pre-specified), then proceed to Step 3.
 
 **Decomposition mode** — how the artifact is split governs dispatch in Step 3:
 - **partition** — units own separate regions/files; run in **parallel**; you merge
@@ -108,7 +132,7 @@ parallelize. Each executor reads the shared artifact's current state and
 extends it (relay) or applies its pass (layered). Check each unit before
 dispatching the next, so continuity errors are caught before they compound.
 
-```
+```text
 Agent(
   subagent_type: general-purpose,
   model: "haiku",
@@ -123,17 +147,36 @@ Mark dispatched units `executing` in the ledger. As executors return, record the
 self-reported results. When a unit's dependencies become satisfied, dispatch it in
 the next batch.
 
-### Step 4 — Check each unit
-As each unit finishes executing, dispatch a Sonnet checker for it:
+### Step 4 — Verify (tiered by criterion type — don't pay Sonnet to read passing code)
+Verification matches the criterion. **A Sonnet read is expensive (~3× Haiku);
+spend it only where judgment is actually needed.**
 
-```
+1. **Run the runnable criteria yourself first (the gate).** For each runnable
+   criterion (a test/command), run it directly with Bash. This *is* the independent
+   verification — you re-run rather than trust the executor's self-report, and it
+   costs no model tokens. (For heavy/parallel gates you may delegate to a Haiku
+   runner, but the orchestrator running a one-line command is cheapest.)
+
+2. **Decide whether Sonnet is even needed for this unit:**
+   - **All runnable criteria pass AND no assertional criteria** → mark the unit
+     `done`. **Do not dispatch a checker.** (Most code units land here — the
+     asteroids run would have skipped Sonnet on all 7.)
+   - **A runnable criterion fails** → dispatch a Sonnet checker to *diagnose and
+     surgically fix* (now a code read is justified — there's a real failure).
+   - **The unit has assertional criteria** (prose, "no claim uncited", design
+     quality — things only a reader can judge) → dispatch a Sonnet checker to read
+     and judge *those dimensions*. It need not re-read code that already passed its
+     gate; point it at what requires judgment.
+
+```text
 Agent(
   subagent_type: general-purpose,
   model: "sonnet",
   description: "atelier check UNIT-NNN",
   prompt: "Use the atelier-check skill. Working dir: docs/atelier/<slug>/.
-           Your unit: UNIT-NNN. Verify the unit's output against the acceptance
-           criteria in briefs/UNIT-NNN.md and return the structured verdict."
+           Your unit: UNIT-NNN. Reason for check: <failing gate: ...> | <assertional
+           criteria to judge: ...>. Verify ONLY what's needed (don't re-read passing
+           code), apply the surgical fix if local, return the structured verdict."
 )
 ```
 
@@ -162,7 +205,14 @@ apply bounded routing using the per-unit counters in the ledger
 | `pass` | all criteria met | mark `done` |
 | `local` | small localized defect, brief sound | tier 1 — checker already attempts the surgical fix and re-checks |
 | `execution` | unit substantially wrong, brief sound | tier 2 — fresh Haiku executor redo with the checker's notes |
-| `brief` | criteria unachievable / contract or brief wrong | tier 3 — you (architect) revise CONTRACT/brief, re-dispatch |
+| `brief` | criteria unachievable / contract or brief wrong | tier 3 — revise the spec, re-dispatch (see jurisdiction below) |
+
+**Tier 3 by jurisdiction (split tier):** a `brief` defect that is *within the unit*
+(the brief itself was thin/wrong, contract is fine) routes to a **Sonnet
+`atelier-brief` re-write** — cheaper than Opus. Only a defect in the **contract**
+(a missing/wrong cross-unit decision) escalates to **you (Opus)**. In direct tier,
+both are yours. Match authority to the defect: don't spend Opus on a within-unit
+brief fix.
 
 **Bounds (defaults; overridable in the contract):**
 - Tier 1 surgical: ≤ 2 passes. Still failing → treat as `execution`, go to tier 2.

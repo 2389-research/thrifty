@@ -48,7 +48,7 @@ You will be told your **working dir** (`docs/atelier/<task-slug>/`) and your
 
 Return a compact report:
 
-```
+```text
 unit: <UNIT-ID>
 outputs: <files created/modified, or where the produced artifact lives>
 criteria:

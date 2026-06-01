@@ -1,0 +1,7 @@
+{"name": "Alice", "age": 30, "active": true}
+{"name": "Bob", "age": 25, "email": "bob@example.com"}
+{"name": "Charlie", "score": 95.5, "active": false}
+{"name": "Diana", "age": 28, "email": "diana@example.com", "active": true}
+{"name": "Eve", "age": null, "verified": true}
+{"name": "Frank", "score": 87, "email": "frank@example.com"}
+{"name": "Grace", "age": 35, "email": "grace@example.com"}

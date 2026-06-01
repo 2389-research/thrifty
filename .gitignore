@@ -1,2 +1,5 @@
 .DS_Store
 node_modules/
+
+# eval run artifacts (throwaway builds + raw csv); curated results go in eval/RESULTS.md
+eval/runs/

@@ -1,0 +1,9 @@
+task,lang,atelier_total_usd,opus_from_spec_usd,savings_pct,atelier_gate,opus_gate
+01-wordfreq,JS,0.164,0.456,64,21/21,24/24
+02-taskstore,JS,0.267,0.599,55,25/25,29/29
+03-jqlite,JS,0.263,0.962,73,32/32,38/38
+04-pysummary,Py,0.215,0.395,46,9/9,17/17
+05-brief,prose,0.123,0.271,55,checklist,checklist
+06-ledger,Py,0.366,0.915,60,35/35,34/34
+07-taskgraph,Go,0.240,0.987,76,pass,pass
+TOTAL,-,1.638,4.584,64,all green,all green

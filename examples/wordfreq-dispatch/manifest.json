@@ -1,0 +1,34 @@
+{
+  "units": [
+    {
+      "id": "UNIT-002",
+      "tier": "haiku",
+      "kind": "generate",
+      "cost_usd": 0.01122,
+      "files": [
+        "test/fixtures/sample.txt"
+      ]
+    },
+    {
+      "id": "UNIT-001",
+      "tier": "haiku",
+      "kind": "generate",
+      "cost_usd": 0.03031,
+      "files": [
+        "src/wordfreq.js",
+        "test/wordfreq.test.js"
+      ]
+    },
+    {
+      "id": "UNIT-003",
+      "tier": "haiku",
+      "kind": "generate",
+      "cost_usd": 0.03639,
+      "files": [
+        "src/cli.js",
+        "test/cli.test.js"
+      ]
+    }
+  ],
+  "dispatch_cost_usd": 0.0779
+}

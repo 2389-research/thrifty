@@ -49,7 +49,7 @@ def build_report(records: list[dict]) -> dict: ...
 - UNIT-003 → `jsonl_stats/__main__.py`, `tests/test_cli.py`
 
 ## Dependency graph
-```
+```text
 UNIT-001, UNIT-002   (independent — run in parallel)
         ↓
 UNIT-003             (CLI imports core from 001; integration test reads fixture from 002)

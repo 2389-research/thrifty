@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+#
+# atelier is a tiered-codegen tool. The examples/ tree (and the gitignored eval/runs/)
+# are GENERATED DEMONSTRATION ARTIFACTS — the literal output of cheap models running the
+# pipeline. They are illustrative, not hand-authored source, so code-quality review of
+# them is noise. Keep review focused on the shipped tool, harness, and docs.
+reviews:
+  path_filters:
+    - "!examples/**"
+    - "!eval/runs/**"
+  # Everything else (skills/**, experiments/**, eval/*.md, eval/run.sh, eval/tasks/**,
+  # README.md, dispatch.py) stays in scope.
