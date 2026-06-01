@@ -114,11 +114,15 @@ def execute():
                         sys.stderr.write(f"[dispatch] REFUSED brief path outside workspace: {out}\n"); files = []
                 else:
                     files = write_files(text, root)
-                if not files:
-                    sys.stderr.write(f"[dispatch] WARNING: {s['id']} produced no output (treating as failed sprint)\n")
                 manifest.append({"id":s["id"],"tier":s.get("tier"),"kind":s.get("kind","generate"),
                                  "cost_usd":round(cost,5),"files":files,"ok":bool(files)})
-                done.add(s["id"]); del pending[s["id"]]
+                del pending[s["id"]]
+                if files:
+                    done.add(s["id"])
+                else:
+                    # a failed sprint is NOT marked done — its dependents stay unsatisfied and
+                    # the next wave aborts, rather than building against missing artifacts.
+                    sys.stderr.write(f"[dispatch] FAILED sprint {s['id']}: no output — dependents will not run.\n")
     json.dump({"sprints":manifest,"dispatch_cost_usd":round(total,4),
                "all_ok":all(m["ok"] for m in manifest) and not pending}, open("manifest.json","w"), indent=2)
     print(f"[execute] {len(manifest)} sprints, ${total:.4f}" + ("" if not pending else f" (ABORTED: {len(pending)} unrun)"))

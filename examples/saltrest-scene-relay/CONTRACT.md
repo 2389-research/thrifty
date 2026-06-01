@@ -58,7 +58,7 @@ to the same `SCENE.md`, building one seamless scene from dawn dread to the hook.
   003, 004, each appending after the previous beat is checked.
 
 ## Dependency graph
-```
+```text
 UNIT-001 → UNIT-002 → UNIT-003 → UNIT-004   (strictly sequential; one shared artifact)
 ```
 
