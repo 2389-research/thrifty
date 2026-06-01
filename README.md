@@ -1,36 +1,41 @@
 # atelier
 
-**Tiered-delegation task execution for Claude Code.** A strong model plans, cheap
-models execute in parallel, a mid model verifies — same quality, a fraction of the
-strong-model cost and wall-clock.
+**Tiered-delegation task execution for Claude Code.** A planner model writes the spec
+into sprints, a cheap model executes and self-verifies against the gate — same gate
+quality as the strong model, **~64% of the cost** ([benchmarked](eval/RESULTS.md)).
 
-> Offload each unit of work to the **weakest model that can do it correctly.**
+> Offload each sprint of work to the **weakest model that can do it correctly.**
 
 ## The idea
 
 Most of the work in a task is pattern-following execution, not reasoning. atelier
-concentrates the expensive model (Opus) on the parts that genuinely need judgment
-— decomposition and every cross-cutting decision — and pushes execution down to a
-fast cheap model (Haiku), with a mid model (Sonnet) verifying each piece against
-explicit acceptance criteria.
+concentrates planning in one model and pushes execution down to a cheap one, with the
+**gate (tests / a checklist) as the trust contract** — independently re-run, never
+self-reported. This generalizes "tests as the source of truth" to any task, code or not.
+
+### Benchmarked architecture
+
+The configuration that won the cost/quality bake-off (spec → working code, 7 tasks across
+JS / Python / Go / prose, gate-verified — see [`eval/RESULTS.md`](eval/RESULTS.md) and
+[`experiments/`](experiments/README.md)):
 
 ```
-architect (Opus)   plan: contract pins every cross-unit decision + per-unit briefs
-      │
-      ▼
-executors (Haiku)  execute one brief each, in parallel where dependencies allow
-      │
-      ▼
-checker (Sonnet)   verify each unit against its acceptance criteria; bounded fixes
-      │
-      ▼
-architect (Opus)   integrate, final coherence pass, report
+spec ──▶ Sonnet  writes contract (pins cross-sprint + genuinely-ambiguous decisions)
+                 + sprints.jsonl (one self-contained unit of work each)
+            │
+            ▼
+         Haiku   one cached agent builds every sprint, runs the gate, and self-fixes
+            │
+            ▼
+         Sonnet  a SCOPED patch — only if a specific failure is left (in practice: never;
+                 the Haiku agent self-fixed to green on all 7 tasks)
 ```
 
-The enabler is **acceptance criteria as the trust contract**: as long as the
-checker verifies each unit against concrete, written criteria, the cheap model's
-output is trustworthy. This generalizes "tests as the source of truth" to any task,
-code or not.
+**Result: ~64% cheaper than Opus building the same spec, at equal gate quality.** Two
+things make it work: a single cached agent reuses the contract across turns (cheap, no
+cold-call bloat), and the contract **pins every decision that crosses a sprint boundary**
+so the executor never invents a system-level choice (leave one ambiguous and the executor
+writes contradictory tests). Opus is *not* in the execution loop.
 
 ## Lineage
 
@@ -38,7 +43,7 @@ atelier generalizes three existing systems to arbitrary tasks:
 
 - **speed-run** — offload first-pass generation to a fast model; the strong model
   does architecture and *surgical* fixes, never wholesale regeneration.
-- **pipelines/local_code_gen** — a strong architect pins every cross-unit decision
+- **pipelines/local_code_gen** — a strong architect pins every cross-sprint decision
   in a contract so the weak executor never makes a system-level choice.
 - **Noospheric Orrery** — proof of the philosophy: Sonnet never extracts; Haiku
   does all the work; Sonnet writes and refines the spec until the cheap model
@@ -46,9 +51,9 @@ atelier generalizes three existing systems to arbitrary tasks:
 
 Where `local_code_gen` writes 600-line byte-pinned contracts for a tiny local
 model (qwen3.6 / gemma), atelier deliberately sits well above that floor. **Haiku
-is far stronger**, so the contract pins only what is *cross-unit AND genuinely
+is far stronger**, so the contract pins only what is *cross-sprint AND genuinely
 ambiguous* — the seams, not the interiors. Since Opus/Sonnet output is the
-expensive part, terseness is the goal: pin the few decisions two capable units
+expensive part, terseness is the goal: pin the few decisions two capable sprints
 would otherwise diverge on, and let Haiku infer the rest.
 
 ## Skills
@@ -64,23 +69,23 @@ would otherwise diverge on, and let Haiku infer the rest.
 ## Planning tiers (who writes the briefs)
 
 - **direct** — Opus writes the contract *and* every brief. Fewest moving parts, one
-  translation boundary. Best for **few units / subtle, correctness-critical work**.
+  translation boundary. Best for **few sprints / subtle, correctness-critical work**.
 - **split** — Opus (director) writes the contract + terse unit specs; **Sonnet**
   brief-writers expand them in parallel (mirrors `local_code_gen`'s
   Opus-contract → Sonnet-sprint flow). The bulky brief-writing drops to the
-  5×-cheaper tier and Opus's context stays lean. Best for **many units (≳ 6) /
+  5×-cheaper tier and Opus's context stays lean. Best for **many sprints (≳ 6) /
   mechanical briefs / scale**.
-- **hybrid** — Opus writes the 1–2 subtle units' briefs, Sonnet the routine rest.
+- **hybrid** — Opus writes the 1–2 subtle sprints' briefs, Sonnet the routine rest.
 
-Rough rule: direct below ~5 units, split above — but it's per-task, and the subtle
-units can stay direct even in a split run. Authority follows the tier: Opus owns
-the contract (cross-unit), the brief-writer owns its unit (within-unit), so a
-within-unit fix routes to cheap Sonnet and only contract defects reach Opus.
+Rough rule: direct below ~5 sprints, split above — but it's per-task, and the subtle
+sprints can stay direct even in a split run. Authority follows the tier: Opus owns
+the contract (cross-sprint), the brief-writer owns its unit (within-sprint), so a
+within-sprint fix routes to cheap Sonnet and only contract defects reach Opus.
 
 ## Usage
 
 Say **"atelier"**, **"delegate this"**, or **"tiered build"** on a multi-part task.
-The orchestrator will: frame the goal, plan (write `CONTRACT.md` + per-unit briefs
+The orchestrator will: frame the goal, plan (write `CONTRACT.md` + per-sprint briefs
 with acceptance criteria, confirmed with you), dispatch Haiku executors in parallel
 where dependencies allow, **verify each unit by criterion type** (run the gate for
 runnable criteria; spend a Sonnet read only when a gate fails or there are
@@ -107,14 +112,14 @@ Artifacts land in `docs/atelier/<task-slug>/` (`CONTRACT.md`, `briefs/`,
 Not every task is "one file per agent." The architect picks a mode by how cohesive
 the final artifact must be:
 
-- **partition** — units own separate regions/files, run in **parallel**, architect
+- **partition** — sprints own separate regions/files, run in **parallel**, architect
   merges. Best for separable outputs (code files, doc sections).
 - **relay** — one shared artifact extended segment by segment, **sequentially**,
   each agent reading the artifact-so-far. Best for flowing prose (a story chapter).
 - **layered** — role-specialized passes over the whole artifact (draft → continuity
   edit → polish), **sequentially**. Best for one seamless voice via multiple lenses.
 
-A single artifact with no cross-unit seams skips the contract entirely — one brief,
+A single artifact with no cross-sprint seams skips the contract entirely — one brief,
 one execute, one check (or just don't use atelier).
 
 ## Fix loop (bounded, terminates)
@@ -133,6 +138,20 @@ A regression guard rolls back any fix that breaks a previously-passing criterion
 
 See [`docs/superpowers/specs/2026-05-28-atelier-design.md`](docs/superpowers/specs/2026-05-28-atelier-design.md).
 
+## Two implementations
+
+- **Lean dispatch flow (benchmarked, recommended)** — `atelier-dispatch`: Sonnet writes
+  `contract.md` + `sprints.jsonl`, one cached Haiku agent builds + self-fixes, scoped
+  Sonnet patch if needed. ~64% cheaper than Opus at equal gate quality. This is the
+  architecture diagrammed at the top.
+- **Subagent substrate (richer, pricier)** — the `atelier-*` skills above (Opus architect
+  → parallel Haiku executor subagents → Sonnet checker). More expensive in the bake-off
+  (per-subagent harness + orchestrator context re-read); reach for it only when you need
+  per-sprint *parallel* verification. Still uses "unit/brief" terminology internally.
+
 ## Status
 
-v0.1.0 — initial implementation. Not yet dogfooded; see the spec's validation plan.
+v0.1 — **benchmarked.** The lean dispatch flow is ~64% cheaper than Opus building the same
+spec, at equal gate quality, across 7 tasks (JS / Python / Go / prose). Evidence:
+[`eval/RESULTS.md`](eval/RESULTS.md) (main findings + full journey) and
+[`experiments/`](experiments/README.md) (reproducible scripts + captured cost data).

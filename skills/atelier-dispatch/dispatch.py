@@ -3,9 +3,13 @@
 atelier dispatch engine — the loop is in CODE, models are tools. No LLM orchestration,
 no API key (bare `claude -p --model X --bare`, subscription OAuth).
 
+Terminology (matches the pipelines repo): spec -> Sonnet writes the contract (cross-sprint
+surface, pins ambiguous decisions) + sprints (self-contained units of work) -> Haiku
+executes each sprint -> Sonnet fixes on failure (bounded).
+
 Modes:
-  dispatch.py --plan            : ONE Sonnet call -> contract.md + units.jsonl (from spec.md [+ agenda.md])
-  dispatch.py                   : execute — loop units.jsonl, bare Haiku calls write <FILE> blocks to disk
+  dispatch.py --plan            : ONE Sonnet call -> contract.md + sprints.jsonl (from spec.md [+ agenda.md])
+  dispatch.py                   : execute — loop sprints.jsonl, bare Haiku calls write <FILE> blocks to disk
   dispatch.py --run "<gate cmd>": FULL pipeline — plan -> execute -> gate -> bounded fix loop -> run_manifest.json
 
 The whole tiered build runs with zero turn-by-turn orchestration: Sonnet architects,
@@ -49,12 +53,13 @@ def plan():
     prompt = ("You are the contract writer. " + ("The architect gave the AGENDA below; honor it. " if agenda else "")
         + "Investigate the task, then produce EXACTLY two files, each wrapped as "
         "<FILE path=\"...\">...</FILE>, nothing else:\n"
-        "1) contract.md — cross-unit surface ONLY (shared interfaces/seam, conventions, ownership, dep graph). Lean.\n"
-        "2) units.jsonl — one JSON per line: "
-        '{"id":"UNIT-001","tier":"haiku","kind":"generate","deps":[],"brief":"terse brief + acceptance criteria"}. '
-        "STRICT: exactly ONE output file per unit — never bundle two files into one unit "
+        "1) contract.md — cross-sprint surface ONLY (shared interfaces/seam, conventions, ownership, dep graph). "
+        "Where the spec is genuinely ambiguous, COMMIT to one answer here so the executor never has to invent it. Lean.\n"
+        "2) sprints.jsonl — one JSON per line (a sprint = one self-contained unit of work): "
+        '{"id":"SPRINT-001","tier":"haiku","kind":"generate","deps":[],"brief":"terse brief + acceptance criteria"}. '
+        "STRICT: exactly ONE output file per sprint — never bundle two files into one sprint "
         "(the executor is a small model and does best on a single focused file). If a "
-        "feature needs a source file and a test file, that's TWO units.\n\n"
+        "feature needs a source file and a test file, that's TWO sprints.\n\n"
         + (f"AGENDA:\n{agenda}\n\n" if agenda else "") + f"TASK SPEC:\n{spec}\n")
     text, cost = call_model(prompt, "sonnet", system=SYS_PLAN)
     files = write_files(text)
@@ -64,21 +69,21 @@ def plan():
 
 def execute():
     contract = open("contract.md").read() if os.path.exists("contract.md") else ""
-    units = [json.loads(l) for l in open("units.jsonl") if l.strip()]
-    pending = {u["id"]: u for u in units}; done, manifest, total = set(), [], 0.0
-    def prompt_for(u):
-        return f"CONTRACT:\n{contract}\n\nYOUR UNIT BRIEF (write exactly one file):\n{u.get('brief','')}\n"
+    sprints = [json.loads(l) for l in open("sprints.jsonl") if l.strip()]
+    pending = {s["id"]: s for s in sprints}; done, manifest, total = set(), [], 0.0
+    def prompt_for(s):
+        return f"CONTRACT:\n{contract}\n\nYOUR SPRINT BRIEF (write exactly one file):\n{s.get('brief','')}\n"
     while pending:
-        ready = [u for u in pending.values() if all(d in done for d in u.get("deps", []))] or list(pending.values())
+        ready = [s for s in pending.values() if all(d in done for d in s.get("deps", []))] or list(pending.values())
         with concurrent.futures.ThreadPoolExecutor(max_workers=8) as ex:
-            futs = {ex.submit(call_model, prompt_for(u), u.get("tier","haiku"), SYS_EXEC): u for u in ready}
+            futs = {ex.submit(call_model, prompt_for(s), s.get("tier","haiku"), SYS_EXEC): s for s in ready}
             for fut in concurrent.futures.as_completed(futs):
-                u = futs[fut]; text, cost = fut.result(); total += cost
+                s = futs[fut]; text, cost = fut.result(); total += cost
                 files = write_files(text)
-                manifest.append({"id":u["id"],"tier":u.get("tier"),"cost_usd":round(cost,5),"files":files})
-                done.add(u["id"]); del pending[u["id"]]
-    json.dump({"units":manifest,"dispatch_cost_usd":round(total,4)}, open("manifest.json","w"), indent=2)
-    print(f"[execute] {len(manifest)} units, haiku ${total:.4f}")
+                manifest.append({"id":s["id"],"tier":s.get("tier"),"cost_usd":round(cost,5),"files":files})
+                done.add(s["id"]); del pending[s["id"]]
+    json.dump({"sprints":manifest,"dispatch_cost_usd":round(total,4)}, open("manifest.json","w"), indent=2)
+    print(f"[execute] {len(manifest)} sprints, haiku ${total:.4f}")
     return total
 
 def run_gate(cmd):
