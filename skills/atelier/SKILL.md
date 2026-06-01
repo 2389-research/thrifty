@@ -1,25 +1,27 @@
 ---
 name: atelier
 description: >
-  Use when the user says "atelier", "delegate this", "tiered build", "plan and
-  delegate", or asks to execute a multi-part task cheaply by having a strong model
-  plan and cheaper models execute. Orchestrates a tiered-delegation run: the
-  architect (Opus, this session) decomposes the task and pins every cross-cutting
-  decision in a contract, executors (Haiku subagents) do the bulk work in parallel
-  from per-unit briefs, and a checker (Sonnet subagent) verifies each unit against
-  explicit acceptance criteria and applies bounded tiered fixes. Works for code and
-  non-code tasks alike.
+  Use when the user says "atelier", "delegate this", "tiered build", or asks to
+  execute a spec cheaply. atelier takes a spec you already have (written by hand or by
+  any model — atelier doesn't care which) and EXECUTES it for less. Orchestrates a
+  tiered-delegation run: the architect (Sonnet) refines the spec into a contract that
+  pins every cross-cutting decision, executors (Haiku subagents) do the bulk work in
+  parallel from per-unit briefs, and a checker (Sonnet subagent) verifies each unit
+  against explicit acceptance criteria and applies bounded tiered fixes. Works for code
+  and non-code tasks alike.
 ---
 
 # atelier — tiered delegation
 
-Execute a task by delegating each unit of work to the **weakest model that can do
-it correctly**. You (Opus, the architect) do the thinking that genuinely needs a
-strong model — decomposition, cross-cutting decisions, defining what "done" means,
-and strategic fixes. Everything else is pushed down to cheaper, faster models.
+You bring a **spec**; atelier executes it for less by delegating each unit of work to
+the **weakest model that can do it correctly**. The architect (Sonnet) does the
+thinking that genuinely needs a capable model — decomposition, cross-cutting decisions,
+defining what "done" means, and strategic fixes. Everything else is pushed down to
+cheaper, faster models. (Where the spec comes from — hand-written, Opus, Gemini,
+whatever — is your call; atelier starts once you have one.)
 
 ```text
-architect (Opus, you)   plan: contract + briefs + acceptance criteria
+architect (Sonnet)       plan: contract + briefs + acceptance criteria
         │
         ▼
 executors (Haiku × N)    execute one brief each, in parallel where deps allow
@@ -28,7 +30,7 @@ executors (Haiku × N)    execute one brief each, in parallel where deps allow
 checker (Sonnet)         verify each unit vs criteria; bounded tiered fixes
         │
         ▼
-architect (you)          integrate, coherence pass, report
+architect (Sonnet)       integrate, coherence pass, report
 ```
 
 **Why:** strong-model reasoning is expensive and slow; most work in a task is
@@ -52,15 +54,16 @@ anyway), or for trivial tasks where the planning overhead exceeds the work.
 
 | Role | Model | Who | Does |
 |------|-------|-----|------|
-| **architect / director** | Opus 4.8 | you, this session | plan, decide cross-unit, integrate, replan |
+| **architect / director** | Sonnet 4.6 | this session | plan, decide cross-unit, integrate, replan |
 | **brief-writer** *(split tier only)* | Sonnet 4.6 | dispatched subagent | expand one terse unit spec into a full brief |
 | **executor** | Haiku 4.5 | dispatched subagent | execute one brief |
 | **checker** | Sonnet 4.6 | dispatched subagent | judge + fix a unit — *only when a gate fails or there are assertional criteria* |
 
 **Dispatch mechanism:** the `Agent` tool's `model` parameter. Dispatch executors
-with `model: "haiku"`, brief-writers and checkers with `model: "sonnet"`. You are
-already Opus. The brief-writer tier exists only in **split** planning tier — in
-direct tier you write the briefs yourself.
+with `model: "haiku"`, brief-writers and checkers with `model: "sonnet"`. The
+architect tier is Sonnet too — run the orchestrating session on Sonnet. The
+brief-writer tier exists only in **split** planning tier — in direct tier the
+architect writes the briefs itself.
 
 ## Artifacts
 
@@ -89,18 +92,18 @@ with the user (unless pre-specified) once briefs exist.
 
 **Calibration (the cost lever):** the executor is Haiku — far stronger than the
 tiny local models the `local_code_gen` discipline was built for. Pin only what is
-**cross-unit AND genuinely ambiguous**; let Haiku infer the rest. Opus/Sonnet
-output is the expensive part, so **terse beats thorough** — a cheap checker catch
-is better than over-specifying every unit.
+**cross-unit AND genuinely ambiguous**; let Haiku infer the rest. Architect/checker
+(Sonnet) output is the expensive part, so **terse beats thorough** — a cheap checker
+catch is better than over-specifying every unit.
 
 **Planning tier** — who writes the briefs (Step 2b):
-- **direct** — Opus writes the contract AND every brief. Best for few units, subtle
-  briefs, correctness-critical work. (No Step 2b.)
-- **split** — Opus writes the contract + terse `UNIT-SPECS.md` and stops; the
-  orchestrator dispatches Sonnet brief-writers (Step 2b). Best for many units (≳ 6)
-  with mechanical briefs, or at scale — the bulky writing drops to the 5×-cheaper
-  tier and Opus stays lean. Hybrid (Opus writes the subtle units' briefs, Sonnet
-  the rest) is allowed.
+- **direct** — the architect writes the contract AND every brief. Best for few units,
+  subtle briefs, correctness-critical work. (No Step 2b.)
+- **split** — the architect writes the contract + terse `UNIT-SPECS.md` and stops; the
+  orchestrator dispatches parallel Sonnet brief-writers (Step 2b). Best for many units
+  (≳ 6) with mechanical briefs, or at scale — parallel brief-writing keeps the
+  architect's context lean and shortens wall-clock. Hybrid (the architect writes the
+  subtle units' briefs, delegates the rest) is allowed.
 
 ### Step 2b — Dispatch brief-writers (split tier only)
 For each unit, dispatch a **Sonnet** `atelier-brief` writer. These are independent
@@ -184,14 +187,14 @@ Apply the **fix-loop control rules** below to the checker's verdict. A unit is o
 `done` when the checker returns `diagnosis: pass`.
 
 ### Step 5 — Integrate
-When all units are `done`, do a final coherence pass yourself (Opus): do the units
+When all units are `done`, do a final coherence pass yourself (the architect): do the units
 fit together as one whole? Resolve any seams the unit-level checks couldn't see.
 - **partition** — assemble the fragments into the final artifact (concatenate per
   the contract's ownership order).
 - **relay / layered** — assembly is a no-op; the shared artifact *is* the output.
   Your coherence pass just confirms the whole reads as one.
 Then report: what was built, the ledger summary, and an approximate note on
-strong-model tokens saved vs. doing the whole task in this session.
+tokens saved vs. building the whole spec without delegation.
 
 ## Fix-loop control (you own loop termination)
 
@@ -208,11 +211,11 @@ apply bounded routing using the per-unit counters in the ledger
 | `brief` | criteria unachievable / contract or brief wrong | tier 3 — revise the spec, re-dispatch (see jurisdiction below) |
 
 **Tier 3 by jurisdiction (split tier):** a `brief` defect that is *within the unit*
-(the brief itself was thin/wrong, contract is fine) routes to a **Sonnet
-`atelier-brief` re-write** — cheaper than Opus. Only a defect in the **contract**
-(a missing/wrong cross-unit decision) escalates to **you (Opus)**. In direct tier,
-both are yours. Match authority to the defect: don't spend Opus on a within-unit
-brief fix.
+(the brief itself was thin/wrong, contract is fine) routes to a fresh **Sonnet
+`atelier-brief` re-write**, isolated to that unit. Only a defect in the **contract**
+(a missing/wrong cross-unit decision) comes back to **you (the architect)**, since
+cross-unit decisions are yours alone. In direct tier, both are yours. Match authority
+to the defect: a within-unit brief fix doesn't need the architect's full context.
 
 **Bounds (defaults; overridable in the contract):**
 - Tier 1 surgical: ≤ 2 passes. Still failing → treat as `execution`, go to tier 2.
@@ -240,4 +243,4 @@ termination.
   not a general sense of quality. If criteria are missing, the plan is incomplete.
 - **Doing the executor's work yourself.** If you find yourself writing the unit's
   output, either the brief was wrong (fix the brief) or the task didn't need
-  atelier. Don't quietly absorb execution back into the Opus session.
+  atelier. Don't quietly absorb execution back into the architect session.

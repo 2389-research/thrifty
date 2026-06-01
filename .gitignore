@@ -1,5 +1,9 @@
 .DS_Store
 node_modules/
 
+# python bytecode (dispatch.py is executed, never imported as a package)
+__pycache__/
+*.pyc
+
 # eval run artifacts (throwaway builds + raw csv); curated results go in eval/RESULTS.md
 eval/runs/

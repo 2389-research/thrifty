@@ -2,7 +2,8 @@
 
 > Terse, director-authored. One block per unit. A Sonnet `atelier-brief` writer
 > expands each into a full `briefs/UNIT-NNN.md`. Keep each block to a few lines —
-> the whole point of split tier is that Opus writes little and Sonnet expands.
+> the whole point of split tier is that the architect writes little and parallel
+> Sonnet brief-writers expand it.
 > Reference shared shapes in CONTRACT.md by name; do not restate them here.
 
 ## UNIT-001 — <title>

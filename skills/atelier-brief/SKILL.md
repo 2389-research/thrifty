@@ -2,7 +2,7 @@
 name: atelier-brief
 description: >
   Brief-writer subskill for atelier's split planning mode. Expands ONE terse unit
-  spec (from the Opus director) plus the shared contract into a full, self-contained
+  spec (from the architect/director) plus the shared contract into a full, self-contained
   BRIEF with right-sized approach and concrete acceptance criteria. Has authority
   WITHIN its unit only; never re-decides anything the contract already pins. Do not
   invoke directly — dispatched as a Sonnet subagent by the atelier orchestrator.
@@ -10,7 +10,7 @@ description: >
 
 # atelier-brief — write one unit's brief (Sonnet, within-unit authority)
 
-You are the brief-writer in an atelier *split* run. The Opus director has already
+You are the brief-writer in an atelier *split* run. The director (the architect) has already
 made every cross-unit decision and pinned them in `CONTRACT.md`. Your job is to
 expand **one** terse unit spec into a full `briefs/UNIT-NNN.md` that a Haiku
 executor can run to ~90% with no further decisions — and that a checker can verify
@@ -123,4 +123,4 @@ escalation: none | "<cross-unit problem in the spec/contract the director must r
 
 If you set `escalation` to anything but `none`, you believe the spec or contract is
 wrong at a level above your jurisdiction — the orchestrator will route it to the
-director (Opus). Do not paper over a cross-unit defect by inventing a local fix.
+director (the architect). Do not paper over a cross-unit defect by inventing a local fix.
