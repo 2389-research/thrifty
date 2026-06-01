@@ -151,7 +151,7 @@ holds `<canvas id="game" width=800 height=600>`. `style.css` = minimal dark them
 - UNIT-007 → `src/game.js`, `src/main.js`, `index.html`, `style.css`, `test/game.test.js`
 
 ## Dependency graph
-```
+```text
 UNIT-001  UNIT-004            (independent — wave 1)
    │  \      │
    │   \     │

@@ -27,6 +27,7 @@ function init() {
 
   let lastTime = performance.now();
   let lastFireState = false;
+  let scoreSubmitted = false;
 
   function gameLoop(now) {
     const dt = Math.min((now - lastTime) / 1000, 0.05); // cap only extreme frame gaps (don't force 60 FPS)
@@ -43,13 +44,11 @@ function init() {
     update(state, input.state, dt);
     render(ctx, state);
 
-    // On game over transition, add score to leaderboard
-    if (state.status === 'gameover' && state.lives === 0) {
-      // Only add score once by checking if we're still on gameover status
+    // On game over transition, add score to leaderboard exactly once
+    if (state.status === 'gameover' && !scoreSubmitted) {
+      scoreSubmitted = true; // dedicated flag — don't corrupt state.lives as a sentinel
       const name = prompt('Game Over! Enter your name:', 'PLAYER') || 'PLAYER';
       addScore(state.leaderboard, name, state.score.value);
-      // Mark that we've added the score to prevent duplicates
-      state.lives = -1; // Use negative to signal we've processed game over
     }
 
     requestAnimationFrame(gameLoop);
