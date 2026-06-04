@@ -32,17 +32,20 @@ SYS_BRIEF = ('You are a planner. Output ONLY a terse build brief in markdown —
 def call_model(prompt, model, system=None):
     cmd = ["claude","-p",prompt,"--model",model,"--bare","--output-format","json"]
     if system: cmd += ["--system-prompt", system]
-    p = subprocess.run(cmd, capture_output=True, text=True, timeout=900)
-    if p.returncode != 0:
-        # surface the failure rather than silently returning empty/partial output that
-        # would later read as a (falsely) successful sprint with no artifacts.
-        sys.stderr.write(f"[dispatch] model call FAILED rc={p.returncode} ({model}): {p.stderr[:300]}\n")
-        return "", 0.0
-    try:
-        d = json.loads(p.stdout); return d.get("result",""), float(d.get("total_cost_usd",0) or 0)
-    except Exception:
-        sys.stderr.write(f"[dispatch] parse fail ({model}): {p.stdout[:200]} {p.stderr[:200]}\n")
-        return "", 0.0   # not p.stdout — never treat unparseable output as file content
+    # `claude -p` intermittently exits rc!=0 (transient API/rate/network blip) or returns
+    # unparseable output. These almost always clear on a retry, so try once more before
+    # giving up — a single flaky call must not silently drop a plan or a sprint's artifact.
+    for attempt in (1, 2):
+        p = subprocess.run(cmd, capture_output=True, text=True, timeout=900)
+        if p.returncode != 0:
+            sys.stderr.write(f"[dispatch] model call FAILED rc={p.returncode} ({model}) attempt {attempt}/2: {p.stderr[:300]}\n")
+            continue
+        try:
+            d = json.loads(p.stdout); return d.get("result",""), float(d.get("total_cost_usd",0) or 0)
+        except Exception:
+            sys.stderr.write(f"[dispatch] parse fail ({model}) attempt {attempt}/2: {p.stdout[:200]} {p.stderr[:200]}\n")
+    # both attempts failed — surface empty rather than treating junk as file content
+    return "", 0.0
 
 FILE_RE = re.compile(r'<FILE path="([^"]+)">\r?\n?(.*?)\r?\n?</FILE>', re.DOTALL)
 def write_files(text, root="."):

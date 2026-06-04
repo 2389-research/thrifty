@@ -21,6 +21,10 @@ bumps it** so `/plugin` installs pick the change up cleanly.
   representative build from $1.23 → $0.86 total at equal verified quality (gate green, 100%
   engine branch coverage). The point of planning is Haiku-sized sprints; escalating the
   executor is the planner punting.
+- **Retry transient model-call failures.** `claude -p` intermittently exits `rc!=0`
+  (transient API/rate/network blip) or returns unparseable output; `call_model` now
+  retries once before giving up, so a single flaky call can no longer silently drop a
+  plan or a sprint's artifact.
 
 ## [0.2.0]
 
