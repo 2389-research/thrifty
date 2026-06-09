@@ -46,9 +46,10 @@ def call_model(prompt, model, system=None):
             sys.stderr.write(f"[dispatch] model call FAILED rc={p.returncode} ({model}) attempt {attempt}/2: {p.stderr[:300]}\n")
             continue
         try:
-            d = json.loads(p.stdout); return d.get("result",""), float(d.get("total_cost_usd",0) or 0)
-        except Exception:
-            sys.stderr.write(f"[dispatch] parse fail ({model}) attempt {attempt}/2: {p.stdout[:200]} {p.stderr[:200]}\n")
+            d = json.loads(p.stdout)
+            return d.get("result", ""), float(d.get("total_cost_usd", 0) or 0)
+        except (ValueError, TypeError) as e:
+            sys.stderr.write(f"[dispatch] parse fail ({model}) attempt {attempt}/2: {e}: {p.stdout[:200]} {p.stderr[:200]}\n")
     # both attempts failed — surface empty rather than treating junk as file content
     return "", 0.0
 
@@ -62,7 +63,8 @@ def write_files(text, root="."):
         rel, content = m.group(1), m.group(2)
         target = (root_path / rel).resolve()
         if target != root_path and root_path not in target.parents:
-            sys.stderr.write(f"[dispatch] REFUSED path outside workspace: {rel}\n"); continue
+            sys.stderr.write(f"[dispatch] REFUSED path outside workspace: {rel}\n")
+            continue
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(content if content.endswith("\n") else content + "\n")
         written.append(rel)
@@ -92,7 +94,7 @@ def plan():
     text, cost = call_model(prompt, "sonnet", system=SYS_PLAN)
     files = write_files(text)
     ok = {"contract.md", "sprints.jsonl"}.issubset(set(files))
-    n = sum(1 for l in open("sprints.jsonl") if l.strip()) if os.path.exists("sprints.jsonl") else 0
+    n = sum(1 for line in open("sprints.jsonl") if line.strip()) if os.path.exists("sprints.jsonl") else 0
     json.dump({"plan_cost_usd": round(cost,5), "files": files, "ok": ok}, open("plan_manifest.json","w"), indent=2)
     if not ok:   # model call failed or produced incomplete output — don't proceed to execute
         sys.stderr.write(f"[plan] FAILED: expected contract.md + sprints.jsonl, got {files}. Aborting.\n")
@@ -103,8 +105,9 @@ def plan():
 def execute():
     root = os.getcwd()
     contract = open("contract.md").read() if os.path.exists("contract.md") else ""
-    sprints = [json.loads(l) for l in open("sprints.jsonl") if l.strip()]
-    pending = {s["id"]: s for s in sprints}; done, manifest, total = set(), [], 0.0
+    sprints = [json.loads(line) for line in open("sprints.jsonl") if line.strip()]
+    pending = {s["id"]: s for s in sprints}
+    done, manifest, total = set(), [], 0.0
     log(f"[execute] building {len(sprints)} sprints on Haiku...")
     def call_for(s):
         # kind "brief" -> emit markdown (saved to briefs/<id>.md); else -> emit <FILE> blocks
@@ -126,14 +129,19 @@ def execute():
         with concurrent.futures.ThreadPoolExecutor(max_workers=8) as ex:
             futs = {ex.submit(call_for, s): s for s in ready}
             for fut in concurrent.futures.as_completed(futs):
-                s = futs[fut]; text, cost = fut.result(); total += cost
+                s = futs[fut]
+                text, cost = fut.result()
+                total += cost
                 if s.get("kind") == "brief":
                     out = s.get("out", f"briefs/{s['id']}.md")
                     op = (pathlib.Path(root) / out).resolve()
                     if op != pathlib.Path(root).resolve() and pathlib.Path(root).resolve() in op.parents:
-                        op.parent.mkdir(parents=True, exist_ok=True); op.write_text(text); files = [out]
+                        op.parent.mkdir(parents=True, exist_ok=True)
+                        op.write_text(text)
+                        files = [out]
                     else:
-                        sys.stderr.write(f"[dispatch] REFUSED brief path outside workspace: {out}\n"); files = []
+                        sys.stderr.write(f"[dispatch] REFUSED brief path outside workspace: {out}\n")
+                        files = []
                 else:
                     files = write_files(text, root)
                 # record the model that ACTUALLY ran, not the plan's intent: generate sprints
@@ -179,12 +187,16 @@ def fix(gate_out):
     return cost
 
 def run_pipeline(gate_cmd):
-    pc = plan(); dc = execute(); fc = 0.0; rounds = 0
+    pc = plan()
+    dc = execute()
+    fc = 0.0
+    rounds = 0
     log(f"[gate] running: {gate_cmd}")
     ok, out = run_gate(gate_cmd)
     log(f"[gate] {'PASS' if ok else 'FAIL'}")
     while not ok and rounds < 2:
-        rounds += 1; fc += fix(out)
+        rounds += 1
+        fc += fix(out)
         log(f"[gate] re-running after fix {rounds}: {gate_cmd}")
         ok, out = run_gate(gate_cmd)
         log(f"[gate] {'PASS' if ok else 'FAIL'}")
@@ -195,10 +207,13 @@ def run_pipeline(gate_cmd):
     log(f"[done] plan ${pc:.4f} + exec ${dc:.4f} + fix ${fc:.4f} = ${pc+dc+fc:.4f}")
 
 def main():
-    try: sys.stdout.reconfigure(line_buffering=True)  # stream progress; harmless if unsupported
-    except Exception: pass
+    try:
+        sys.stdout.reconfigure(line_buffering=True)  # stream progress; harmless if unsupported
+    except (AttributeError, ValueError):
+        pass
     if "--run" in sys.argv:
-        i = sys.argv.index("--run"); gate = sys.argv[i+1] if i+1 < len(sys.argv) else "node --test"
+        i = sys.argv.index("--run")
+        gate = sys.argv[i + 1] if i + 1 < len(sys.argv) else "node --test"
         run_pipeline(gate)
     elif "--plan" in sys.argv:
         plan()
