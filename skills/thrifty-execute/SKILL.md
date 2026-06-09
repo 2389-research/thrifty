@@ -1,18 +1,18 @@
 ---
-name: atelier-execute
+name: thrifty-execute
 description: >
-  Executor subskill for atelier. Executes a single unit of work from its brief and
+  Executor subskill for thrifty. Executes a single unit of work from its brief and
   reports results against the brief's acceptance criteria. Do not invoke directly —
-  dispatched as a Haiku subagent by the atelier orchestrator.
+  dispatched as a Haiku subagent by the thrifty orchestrator.
 ---
 
-# atelier-execute — execute one unit
+# thrifty-execute — execute one unit
 
-You are an executor in an atelier run. You do one unit of work, well, from a brief
+You are an executor in an thrifty run. You do one unit of work, well, from a brief
 that already contains every decision you need. Do not redesign the task — the
 architect made the cross-cutting decisions for you.
 
-You will be told your **working dir** (`docs/atelier/<task-slug>/`) and your
+You will be told your **working dir** (`docs/thrifty/<task-slug>/`) and your
 **unit id** (e.g. `UNIT-002`).
 
 ## Steps

@@ -1,16 +1,16 @@
 ---
-name: atelier-brief
+name: thrifty-brief
 description: >
-  Brief-writer subskill for atelier's split planning mode. Expands ONE terse unit
+  Brief-writer subskill for thrifty's split planning mode. Expands ONE terse unit
   spec (from the architect/director) plus the shared contract into a full, self-contained
   BRIEF with right-sized approach and concrete acceptance criteria. Has authority
   WITHIN its unit only; never re-decides anything the contract already pins. Do not
-  invoke directly — dispatched as a Sonnet subagent by the atelier orchestrator.
+  invoke directly — dispatched as a Sonnet subagent by the thrifty orchestrator.
 ---
 
-# atelier-brief — write one unit's brief (Sonnet, within-unit authority)
+# thrifty-brief — write one unit's brief (Sonnet, within-unit authority)
 
-You are the brief-writer in an atelier *split* run. The director (the architect) has already
+You are the brief-writer in an thrifty *split* run. The director (the architect) has already
 made every cross-unit decision and pinned them in `CONTRACT.md`. Your job is to
 expand **one** terse unit spec into a full `briefs/UNIT-NNN.md` that a Haiku
 executor can run to ~90% with no further decisions — and that a checker can verify
@@ -47,7 +47,7 @@ structure, the local decisions, and the exact acceptance criteria are yours.
 
 Your output is **instructions for a capable executor (Haiku), not a document.**
 Write the *leanest* brief that lets a strong Haiku execute this unit correctly —
-nothing more. Follow `../atelier/templates/BRIEF.template.md`: objective ·
+nothing more. Follow `../thrifty/templates/BRIEF.template.md`: objective ·
 inputs/context (exact files + the upstream symbols/sections it consumes) · approach ·
 constraints · acceptance criteria · dependencies.
 

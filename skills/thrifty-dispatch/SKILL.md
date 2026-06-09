@@ -1,7 +1,7 @@
 ---
-name: atelier-dispatch
+name: thrifty-dispatch
 description: >
-  Lean tiered-build orchestrator (JSONL-dispatch architecture). Use for "atelier
+  Lean tiered-build orchestrator (JSONL-dispatch architecture). Use for "thrifty
   fast / lean / dispatch", or a multi-sprint build where cost matters. The architect
   (Sonnet) writes a contract + a sprints.jsonl and calls a dispatch SCRIPT that loops
   cheap bare model calls (claude -p --bare, subscription, no API key) to write each
@@ -9,9 +9,9 @@ description: >
   manifest, so its context stays tiny. Then it runs the gate and surgical-fixes.
 ---
 
-# atelier-dispatch — write JSONL, dispatch, verify (the lean architecture)
+# thrifty-dispatch — write JSONL, dispatch, verify (the lean architecture)
 
-This is atelier rebuilt on the speed-run / `local_code_gen` substrate: **the LLM
+This is thrifty rebuilt on the speed-run / `local_code_gen` substrate: **the LLM
 writes a spec; a deterministic script runs the per-sprint model calls.** It exists
 because the subagent version is dominated by orchestrator cost — each subagent
 carries ~40k of harness context and its report lands back in the orchestrator's
@@ -73,7 +73,7 @@ outputs go to disk, not into your context.
 
 ## Verified (task 01, wordfreq, 3 sprints)
 Dispatch tier cost **$0.078** (3 Haiku bare calls), one-shot **18/19** tests, **19/19**
-after one surgical fix — vs the subagent atelier's **$1.86** for the same task. The
+after one surgical fix — vs the subagent thrifty's **$1.86** for the same task. The
 one failure was the executor writing a test that contradicted the contract's tokenizer
 (`word0` collapses to `word` under "split on non-letters") — caught by the gate, fixed
 in one edit. That is the loop working as designed.

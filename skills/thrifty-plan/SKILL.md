@@ -1,27 +1,27 @@
 ---
-name: atelier-plan
+name: thrifty-plan
 description: >
-  Planning discipline for atelier, run by the architect (Sonnet) itself. Decomposes
+  Planning discipline for thrifty, run by the architect (Sonnet) itself. Decomposes
   a task into units, writes CONTRACT.md (cross-unit decisions + dependency graph),
   one self-contained BRIEF per unit with concrete acceptance criteria, and
-  initializes the LEDGER. Invoked by the atelier orchestrator during the Plan step.
+  initializes the LEDGER. Invoked by the thrifty orchestrator during the Plan step.
 ---
 
-# atelier-plan — the architect's planning discipline
+# thrifty-plan — the architect's planning discipline
 
 Your job here is to produce a plan detailed enough that cheap executors (Haiku)
 can do the work to ~90% with no further decisions, and a checker (Sonnet) can
 verify each piece objectively. You make every cross-unit decision **once, here**,
 so no executor ever has to.
 
-Work in this order. Persist everything to `docs/atelier/<task-slug>/`.
+Work in this order. Persist everything to `docs/thrifty/<task-slug>/`.
 
-## 0. First: is this even an atelier job?
+## 0. First: is this even an thrifty job?
 
-atelier's machinery (contract + briefs + ledger) exists **only to keep multiple
+thrifty's machinery (contract + briefs + ledger) exists **only to keep multiple
 units consistent**. Before planning, check the shape of the work:
 
-- **One indivisible artifact, no tiering wanted** → don't use atelier. Just do it.
+- **One indivisible artifact, no tiering wanted** → don't use thrifty. Just do it.
 - **One artifact, but you want the cost/quality tiering** → run a *degenerate plan*:
   **skip `CONTRACT.md`** (there are no cross-unit seams to pin), write a single
   `briefs/UNIT-001.md` with acceptance criteria, dispatch one Haiku executor, one
@@ -68,7 +68,7 @@ translation boundary.
   must reach the brief intact.
 - **split** — you (the architect / *director*) write the contract + a **terse unit
   spec** per unit, then **stop**. The orchestrator dispatches parallel Sonnet
-  `atelier-brief` writers (one per unit) to expand each spec into a full brief. The
+  `thrifty-brief` writers (one per unit) to expand each spec into a full brief. The
   bulky brief-writing runs in parallel and your context stays lean. Best for **many
   units (≳ 6)** with **mechanical / well-trodden briefs**, or when running at scale.
 
@@ -81,7 +81,7 @@ all of steps 2–5.
 
 ## 2. Write CONTRACT.md
 
-Use `../atelier/templates/CONTRACT.template.md`. This is the cross-unit surface.
+Use `../thrifty/templates/CONTRACT.template.md`. This is the cross-unit surface.
 
 **The specificity rule — the one test for every line:**
 
@@ -111,7 +111,7 @@ strength**:
   cross-module test on every edge, "what fails without this" on every convention)
   because its executor is a **tiny local model (qwen3.6 / gemma)** that infers
   nothing.
-- **atelier's executor is Haiku — far stronger.** Haiku fills obvious fields,
+- **thrifty's executor is Haiku — far stronger.** Haiku fills obvious fields,
   follows idiom, and handles ordinary ambiguity on its own. So **pin only what is
   both cross-unit AND genuinely ambiguous** — the few decisions where two capable
   units would otherwise diverge. Everything Haiku can reasonably infer, leave out.
@@ -153,14 +153,14 @@ If you chose the **split** tier, do NOT write full briefs. Instead write
 Keep these terse — a few lines each. The point of split tier is that *you* write
 little and Sonnet expands; don't pre-write the brief here.
 
-Use `../atelier/templates/UNIT-SPEC.template.md`. Then go to step 5 (ledger) and
+Use `../thrifty/templates/UNIT-SPEC.template.md`. Then go to step 5 (ledger) and
 stop — the orchestrator dispatches the Sonnet brief-writers. **Steps 3–4 below are
-the brief-writers' job in split tier (they run `atelier-brief`); they are YOUR job
+the brief-writers' job in split tier (they run `thrifty-brief`); they are YOUR job
 only in direct tier.**
 
 ## 3. Write one BRIEF per unit  *(direct tier)*
 
-Use `../atelier/templates/BRIEF.template.md`. Each brief is **self-contained**: an
+Use `../thrifty/templates/BRIEF.template.md`. Each brief is **self-contained**: an
 executor reads the contract + this brief and nothing else.
 
 - **Approach** at the level Haiku needs — describe what to do, not every keystroke.
@@ -197,18 +197,18 @@ ApiError, not a raw dict."
 
 ## 5. Initialize the LEDGER
 
-Use `../atelier/templates/LEDGER.template.md`. One row per unit, all `pending`,
+Use `../thrifty/templates/LEDGER.template.md`. One row per unit, all `pending`,
 counters at 0, with the dependency column filled from the graph.
 
 ## Output of this step
 
-In `docs/atelier/<task-slug>/`:
+In `docs/thrifty/<task-slug>/`:
 - `CONTRACT.md` with the dependency graph and the chosen modes/tier,
 - `LEDGER.md` initialized,
 - **direct tier:** `briefs/UNIT-NNN.md` … one per unit, each with acceptance
   criteria (you wrote them); confirm criteria with the user unless pre-specified.
 - **split tier:** `UNIT-SPECS.md` with one terse block per unit (you wrote these);
   the briefs do **not** exist yet — the orchestrator dispatches Sonnet
-  `atelier-brief` writers to produce them, and criteria are confirmed after that.
+  `thrifty-brief` writers to produce them, and criteria are confirmed after that.
 
 Return control to the orchestrator for the dispatch phase.

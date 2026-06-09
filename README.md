@@ -1,4 +1,4 @@
-# atelier
+# thrifty
 
 **Tiered-delegation task execution for Claude Code.** A planner model writes the spec
 into sprints, a cheap model executes and self-verifies against the gate — same gate
@@ -8,7 +8,7 @@ quality as the strong model, **~64% cheaper** (≈⅓ the cost) ([benchmarked](e
 
 ## The idea
 
-Most of the work in a task is pattern-following execution, not reasoning. atelier
+Most of the work in a task is pattern-following execution, not reasoning. thrifty
 concentrates planning in one model and pushes execution down to a cheap one, with the
 **gate (tests / a checklist) as the trust contract** — independently re-run, never
 self-reported. This generalizes "tests as the source of truth" to any task, code or not.
@@ -39,18 +39,18 @@ writes contradictory tests). Opus is *not* in the execution loop.
 
 ## Install
 
-atelier ships as a Claude Code **plugin** (bundles all six skills):
+thrifty ships as a Claude Code **plugin** (bundles all six skills):
 
 ```text
-/plugin marketplace add 2389-research/atelier
-/plugin install atelier@atelier
+/plugin marketplace add 2389-research/thrifty
+/plugin install thrifty@thrifty
 ```
 
-Then trigger it with **"atelier"**, **"delegate this"**, or **"tiered build"**.
+Then trigger it with **"thrifty"**, **"delegate this"**, or **"tiered build"**.
 
-> The subagent-based skills (`atelier`, `atelier-plan/brief/execute/check`) need no
-> external runtime. The lean `atelier-dispatch` flow shells out to
-> `skills/atelier-dispatch/dispatch.py`, so it additionally requires **Python 3** on
+> The subagent-based skills (`thrifty`, `thrifty-plan/brief/execute/check`) need no
+> external runtime. The lean `thrifty-dispatch` flow shells out to
+> `skills/thrifty-dispatch/dispatch.py`, so it additionally requires **Python 3** on
 > `PATH`.
 
 To hack on it locally instead, symlink the skills into `~/.claude/skills/`:
@@ -61,7 +61,7 @@ for d in skills/*/; do ln -s "$PWD/$d" ~/.claude/skills/; done
 
 ## Lineage
 
-atelier generalizes three existing systems to arbitrary tasks:
+thrifty generalizes three existing systems to arbitrary tasks:
 
 - **speed-run** — offload first-pass generation to a fast model; the strong model
   does architecture and *surgical* fixes, never wholesale regeneration.
@@ -72,7 +72,7 @@ atelier generalizes three existing systems to arbitrary tasks:
   reliably passes.
 
 Where `local_code_gen` writes 600-line byte-pinned contracts for a tiny local
-model (qwen3.6 / gemma), atelier deliberately sits well above that floor. **Haiku
+model (qwen3.6 / gemma), thrifty deliberately sits well above that floor. **Haiku
 is far stronger**, so the contract pins only what is *cross-sprint AND genuinely
 ambiguous* — the seams, not the interiors. Since the planner's (Sonnet) output is the
 expensive part, terseness is the goal: pin the few decisions two capable sprints
@@ -82,11 +82,11 @@ would otherwise diverge on, and let Haiku infer the rest.
 
 | Skill | Role | Model | Runs as |
 |-------|------|-------|---------|
-| `atelier` | orchestrator | — | this session |
-| `atelier-plan` | director's planning discipline | Sonnet | this session |
-| `atelier-brief` | expand a unit spec into a brief *(split tier)* | Sonnet | dispatched subagent |
-| `atelier-execute` | execute one unit | Haiku | dispatched subagent |
-| `atelier-check` | verify + fix one unit | Sonnet | dispatched subagent |
+| `thrifty` | orchestrator | — | this session |
+| `thrifty-plan` | director's planning discipline | Sonnet | this session |
+| `thrifty-brief` | expand a unit spec into a brief *(split tier)* | Sonnet | dispatched subagent |
+| `thrifty-execute` | execute one unit | Haiku | dispatched subagent |
+| `thrifty-check` | verify + fix one unit | Sonnet | dispatched subagent |
 
 ## Planning tiers (who writes the briefs)
 
@@ -107,7 +107,7 @@ architect.
 
 ## Usage
 
-Say **"atelier"**, **"delegate this"**, or **"tiered build"** on a multi-part task.
+Say **"thrifty"**, **"delegate this"**, or **"tiered build"** on a multi-part task.
 The orchestrator will: frame the goal, plan (write `CONTRACT.md` + per-sprint briefs
 with acceptance criteria, confirmed with you), dispatch Haiku executors in parallel
 where dependencies allow, **verify each unit by criterion type** (run the gate for
@@ -127,7 +127,7 @@ coherence pass and report.
 So for code-with-tests the common path costs no checker tokens; Sonnet is spent only
 on failures and on things only a reader can judge.
 
-Artifacts land in `docs/atelier/<task-slug>/` (`CONTRACT.md`, `briefs/`,
+Artifacts land in `docs/thrifty/<task-slug>/` (`CONTRACT.md`, `briefs/`,
 `LEDGER.md`) so a run is auditable and resumable.
 
 ### Decomposition modes
@@ -143,7 +143,7 @@ the final artifact must be:
   edit → polish), **sequentially**. Best for one seamless voice via multiple lenses.
 
 A single artifact with no cross-sprint seams skips the contract entirely — one brief,
-one execute, one check (or just don't use atelier).
+one execute, one check (or just don't use thrifty).
 
 ## Fix loop (bounded, terminates)
 
@@ -165,11 +165,11 @@ scripts + captured data are in [`experiments/`](experiments/README.md).
 
 ## Two implementations
 
-- **Lean dispatch flow (benchmarked, recommended)** — `atelier-dispatch`: Sonnet writes
+- **Lean dispatch flow (benchmarked, recommended)** — `thrifty-dispatch`: Sonnet writes
   `contract.md` + `sprints.jsonl`, one cached Haiku agent builds + self-fixes, scoped
   Sonnet patch if needed. ~64% cheaper than Opus at equal gate quality. This is the
   architecture diagrammed at the top.
-- **Subagent substrate (richer, pricier)** — the `atelier-*` skills above (Sonnet architect
+- **Subagent substrate (richer, pricier)** — the `thrifty-*` skills above (Sonnet architect
   → parallel Haiku executor subagents → Sonnet checker). More expensive in the bake-off
   (per-subagent harness + orchestrator context re-read); reach for it only when you need
   per-sprint *parallel* verification. Still uses "unit/brief" terminology internally.

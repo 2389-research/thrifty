@@ -1,6 +1,6 @@
 # Ledger — <task name>
 
-Working dir: `docs/atelier/<task-slug>/`
+Working dir: `docs/thrifty/<task-slug>/`
 
 ## Units
 

@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to atelier are recorded here. Versioning is [SemVer](https://semver.org/):
+All notable changes to thrifty (formerly **atelier**) are recorded here. Versioning is [SemVer](https://semver.org/):
 the `version` in `.claude-plugin/plugin.json` is the source of truth, and **every release
 bumps it** so `/plugin` installs pick the change up cleanly.
 
@@ -8,6 +8,18 @@ bumps it** so `/plugin` installs pick the change up cleanly.
   invocation, incompatible dispatch interface).
 - **MINOR** — new capability or a backwards-compatible behavior/doc change.
 - **PATCH** — fixes and small corrections, no behavior change.
+
+## [0.5.0]
+
+- **Renamed the project `atelier` → `thrifty`.** This renames the live surface going
+  forward: the six skills (`thrifty`, `thrifty-plan`, `thrifty-brief`, `thrifty-execute`,
+  `thrifty-check`, `thrifty-dispatch`), the trigger word (say **"thrifty"** instead of
+  "atelier"; "delegate this" / "tiered build" still work), the plugin name, the install
+  slug (`2389-research/thrifty`), and the run-artifact output path (`docs/thrifty/<slug>/`).
+  **Breaking:** the old `atelier`/`atelier-*` skill names and `atelier@atelier` install no
+  longer resolve — reinstall as `thrifty@thrifty`. Captured evidence under the old name
+  (`eval/`, `experiments/`, `examples/`, and earlier entries below) is left intact as the
+  historical record; only past releases were ever published as "atelier".
 
 ## [0.4.0]
 

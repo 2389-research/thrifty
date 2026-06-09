@@ -1,9 +1,9 @@
 ---
-name: atelier
+name: thrifty
 description: >
-  Use when the user says "atelier", "delegate this", "tiered build", or asks to
-  execute a spec cheaply. atelier takes a spec you already have (written by hand or by
-  any model — atelier doesn't care which) and EXECUTES it for less. Orchestrates a
+  Use when the user says "thrifty", "delegate this", "tiered build", or asks to
+  execute a spec cheaply. thrifty takes a spec you already have (written by hand or by
+  any model — thrifty doesn't care which) and EXECUTES it for less. Orchestrates a
   tiered-delegation run: the architect (Sonnet) refines the spec into a contract that
   pins every cross-cutting decision, executors (Haiku subagents) do the bulk work in
   parallel from per-unit briefs, and a checker (Sonnet subagent) verifies each unit
@@ -11,14 +11,14 @@ description: >
   and non-code tasks alike.
 ---
 
-# atelier — tiered delegation
+# thrifty — tiered delegation
 
-You bring a **spec**; atelier executes it for less by delegating each unit of work to
+You bring a **spec**; thrifty executes it for less by delegating each unit of work to
 the **weakest model that can do it correctly**. The architect (Sonnet) does the
 thinking that genuinely needs a capable model — decomposition, cross-cutting decisions,
 defining what "done" means, and strategic fixes. Everything else is pushed down to
 cheaper, faster models. (Where the spec comes from — hand-written, Opus, Gemini,
-whatever — is your call; atelier starts once you have one.)
+whatever — is your call; thrifty starts once you have one.)
 
 ```text
 architect (Sonnet)       plan: contract + briefs + acceptance criteria
@@ -67,9 +67,9 @@ architect writes the briefs itself.
 
 ## Artifacts
 
-Create a working directory `docs/atelier/<task-slug>/` and persist:
+Create a working directory `docs/thrifty/<task-slug>/` and persist:
 
-- `CONTRACT.md` — the cross-unit architectural surface (see `atelier-plan`).
+- `CONTRACT.md` — the cross-unit architectural surface (see `thrifty-plan`).
 - `briefs/UNIT-NNN.md` — one self-contained brief per unit.
 - `LEDGER.md` — status + fix-loop counters per unit; makes the run resumable.
 
@@ -84,7 +84,7 @@ code, source material, conventions). You cannot pin cross-unit decisions you
 haven't looked at. Choose a `<task-slug>` and create the working directory.
 
 ### Step 2 — Plan
-Invoke **`atelier-plan`** (you run this yourself; it is your planning discipline).
+Invoke **`thrifty-plan`** (you run this yourself; it is your planning discipline).
 It picks a **decomposition mode** and a **planning tier**, then produces
 `CONTRACT.md`, the dependency graph, and the briefs (direct) or terse unit specs
 (split). Initialize `LEDGER.md` with every unit `pending`. Criteria are confirmed
@@ -106,7 +106,7 @@ catch is better than over-specifying every unit.
   subtle units' briefs, delegates the rest) is allowed.
 
 ### Step 2b — Dispatch brief-writers (split tier only)
-For each unit, dispatch a **Sonnet** `atelier-brief` writer. These are independent
+For each unit, dispatch a **Sonnet** `thrifty-brief` writer. These are independent
 (each needs only the contract + its unit spec), so **dispatch them in parallel**
 (one message, multiple `Agent(model:"sonnet")` calls). Each expands its terse spec
 into `briefs/UNIT-NNN.md` with right-sized approach + concrete criteria, with
@@ -139,8 +139,8 @@ dispatching the next, so continuity errors are caught before they compound.
 Agent(
   subagent_type: general-purpose,
   model: "haiku",
-  description: "atelier execute UNIT-NNN",
-  prompt: "Use the atelier-execute skill. Working dir: docs/atelier/<slug>/.
+  description: "thrifty execute UNIT-NNN",
+  prompt: "Use the thrifty-execute skill. Working dir: docs/thrifty/<slug>/.
            Your unit: UNIT-NNN. Read CONTRACT.md and briefs/UNIT-NNN.md, execute
            the brief, and report results against its acceptance criteria."
 )
@@ -175,8 +175,8 @@ spend it only where judgment is actually needed.**
 Agent(
   subagent_type: general-purpose,
   model: "sonnet",
-  description: "atelier check UNIT-NNN",
-  prompt: "Use the atelier-check skill. Working dir: docs/atelier/<slug>/.
+  description: "thrifty check UNIT-NNN",
+  prompt: "Use the thrifty-check skill. Working dir: docs/thrifty/<slug>/.
            Your unit: UNIT-NNN. Reason for check: <failing gate: ...> | <assertional
            criteria to judge: ...>. Verify ONLY what's needed (don't re-read passing
            code), apply the surgical fix if local, return the structured verdict."
@@ -212,7 +212,7 @@ apply bounded routing using the per-unit counters in the ledger
 
 **Tier 3 by jurisdiction (split tier):** a `brief` defect that is *within the unit*
 (the brief itself was thin/wrong, contract is fine) routes to a fresh **Sonnet
-`atelier-brief` re-write**, isolated to that unit. Only a defect in the **contract**
+`thrifty-brief` re-write**, isolated to that unit. Only a defect in the **contract**
 (a missing/wrong cross-unit decision) comes back to **you (the architect)**, since
 cross-unit decisions are yours alone. In direct tier, both are yours. Match authority
 to the defect: a within-unit brief fix doesn't need the architect's full context.
@@ -243,4 +243,4 @@ termination.
   not a general sense of quality. If criteria are missing, the plan is incomplete.
 - **Doing the executor's work yourself.** If you find yourself writing the unit's
   output, either the brief was wrong (fix the brief) or the task didn't need
-  atelier. Don't quietly absorb execution back into the architect session.
+  thrifty. Don't quietly absorb execution back into the architect session.

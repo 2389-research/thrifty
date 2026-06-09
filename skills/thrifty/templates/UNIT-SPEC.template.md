@@ -1,6 +1,6 @@
 # Unit Specs — <task name>   (split tier)
 
-> Terse, director-authored. One block per unit. A Sonnet `atelier-brief` writer
+> Terse, director-authored. One block per unit. A Sonnet `thrifty-brief` writer
 > expands each into a full `briefs/UNIT-NNN.md`. Keep each block to a few lines —
 > the whole point of split tier is that the architect writes little and parallel
 > Sonnet brief-writers expand it.

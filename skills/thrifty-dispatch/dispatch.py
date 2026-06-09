@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-atelier dispatch engine — the loop is in CODE, models are tools. No LLM orchestration,
+thrifty dispatch engine — the loop is in CODE, models are tools. No LLM orchestration,
 no API key (bare `claude -p --model X --bare`, subscription OAuth).
 
 Terminology (matches the pipelines repo): spec -> Sonnet writes the contract (cross-sprint
