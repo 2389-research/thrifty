@@ -56,6 +56,11 @@ all 7. Across framings the direction is unambiguous: executor-vs-executor on the
   the rigorous fix (scoped, not yet built).
 - The cost win shrinks on stacks Haiku is less fluent in (largest on JS, smaller on Go),
   and amplifies with a free/local executor.
+- **Prices drift.** A fresh re-measure on 2026-06-10 (see the dated block at the bottom)
+  found the **Sonnet planning tier ~30–90% pricier** than these 05-29 rows, while Opus and
+  Haiku-execution held stable. The win is real but narrower now (jqlite ~43% vs the 73%
+  below), and the small-task crossover moved up — on trivial builds a single agent beats
+  thrifty. Treat the headline figures as a *best case at the time measured*, not a constant.
 
 ---
 
@@ -395,3 +400,38 @@ magnitude are unambiguous.
 builds and self-verifies it (MCP off, gate in-loop). Cheaper than Opus by 33–76% per task
 (~61% overall) at equal quality, across JS / Python / Go / prose. Escalate to a *scoped*
 one-shot Sonnet fix only for a specific stubborn failure — never an open-ended fix agent.
+
+---
+
+## 2026-06-10 — fresh three-way re-measure (Opus / dispatch / subagent) + planning-cost drift
+
+Re-ran the full pipeline on two tasks to (a) get fresh Opus *and* both thrifty flows on the
+same specs in one sitting, and (b) check the recorded numbers ~2 weeks on. All measured via
+`claude -p --output-format json` (`total_cost_usd`), MCP disabled, every arm gate-verified
+(`node --test`). Earlier rows above are left intact; this is an append, not a revision.
+
+| task | size | Opus full CC | dispatch (Sonnet plan + bare Haiku) | subagent (aggregate orch+subagents) | cheapest |
+|------|------|--------------|--------------------------------------|--------------------------------------|----------|
+| fibkit       | small (393 LOC, 14 units) | **$0.374** | $0.448 | $0.544¹ | **Opus** |
+| 03-jqlite    | large (~560 LOC, 5 modules, 12 units) | $0.880 | **$0.497** | $0.753 | **dispatch** |
+
+¹ subagent runs were per-unit dispatch (fibkit $0.544; jqlite $0.753, 7 units). Both gate-PASS; the jqlite
+subagent LEDGER recorded all 7 executors on `claude-haiku-4-5` (the model override landed
+this run — it's environment-dependent, which is why the flow now *verifies* rather than assumes).
+
+**Findings:**
+1. **Crossover confirmed fresh.** Simple task → a single Opus agent is cheapest (thrifty's
+   fixed planning toll doesn't amortize). Large task → both thrifty flows beat Opus, dispatch
+   by ~43%. Scaling simple→large: **Opus +135%** ($0.374→$0.880), **subagent +38%**, **dispatch
+   +11%** — the cheap tier absorbs volume nearly flat while the strong single agent's cost balloons.
+2. **Dispatch < subagent on both,** and the gap widens with unit count (+21% → +51%) — the
+   per-spawn harness + orchestrator report re-read. (Motivates the cached-pool enhancement, issue #9.)
+3. **Planning-cost drift.** dispatch jqlite was **$0.263 recorded (05-29) → $0.497 now**, almost
+   entirely the **Sonnet planning** line (jqlite plan $0.137 → $0.278); Haiku execution
+   ($0.21–0.22) and Opus ($0.88 vs recorded $0.96) held stable. So the win narrowed from ~73%
+   to ~43% on jqlite — still decisive on large builds, but the "~64%" headline is now a
+   best-case-at-time-of-measure figure, and the small-task crossover moved up.
+
+**Takeaway unchanged in direction, updated in magnitude:** use dispatch by default; thrifty
+pays on large/multi-unit builds and loses to a single agent on trivial ones; watch the Sonnet
+planning tier, which is the volatile cost. (n=1, ±20% noise — directional, not precise.)
