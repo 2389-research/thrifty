@@ -34,10 +34,11 @@ unit ids** (e.g. `UNIT-001, UNIT-002, …`), and the **gate command** to run at 
    - If a brief is genuinely ambiguous or contradicts the contract on a *cross-unit* matter,
      don't guess — note it in your report (the orchestrator/checker will route it).
 
-3. **Run the gate and self-fix.** After building the list, run the gate command. If it
-   fails, diagnose and fix (your own code or your own bad test) and re-run, until it passes
-   or you've made a few honest attempts. Report the final gate result either way — do not
-   claim green you didn't see.
+3. **Run the gate and self-fix (bounded).** After building the list, run the gate command.
+   If it fails, diagnose and fix (your own code or your own bad test) and re-run — **at most
+   3 fix attempts**. If it's still red after 3, stop and report the failure (with the last
+   error); the orchestrator routes it from there. Report the final gate result either way —
+   do not claim green you didn't see.
 
 ## Report (your final message — this is the return value, not human-facing)
 

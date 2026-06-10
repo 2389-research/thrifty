@@ -165,11 +165,13 @@ dependency order regardless; the mode shapes the briefs + the integration step):
 the entire unit list in one session.** Do **not** spawn one subagent per unit. Hand the one
 executor the dependency-ordered list; it reads `CONTRACT.md` once and builds each unit in
 turn, **reusing (caching) the contract + its own accumulating output across units**, then
-runs the gate in-loop and self-fixes. This recreates the cheapest measured architecture (the
-"single cached Haiku agent" in `eval/RESULTS.md`) *inside* Claude Code: one spawn's harness
-amortized across all units, and **one report back** to the orchestrator instead of N.
-Parallelism is deliberately given up — it is not worth the per-spawn harness + the
-orchestrator re-reading N reports that one-subagent-per-unit costs.
+runs the gate in-loop and self-fixes. It uses the same one-cached-agent *shape* as
+`eval/RESULTS.md`'s cheapest architecture: one spawn's harness amortized across all units,
+and **one report back** instead of N. (Measured, it's a *modest* win over one-subagent-per-unit
+— the subagent flow's cost is dominated by this orchestrating session, not by executor
+spawns, so it stays above the dispatch flow regardless; that's why dispatch is the default.
+Pooling executors is still the right call here: simpler and no worse.) Parallelism isn't the
+point — you're not fanning out for speed.
 
 ```text
 Agent(
