@@ -142,13 +142,25 @@ Agent(
   description: "thrifty execute UNIT-NNN",
   prompt: "Use the thrifty-execute skill. Working dir: docs/thrifty/<slug>/.
            Your unit: UNIT-NNN. Read CONTRACT.md and briefs/UNIT-NNN.md, execute
-           the brief, and report results against its acceptance criteria."
+           the brief, and report results against its acceptance criteria.
+           FIRST LINE of your report MUST be: 'model: <the model id you are running
+           on>' so the orchestrator can verify the tier."
 )
 ```
 
 Mark dispatched units `executing` in the ledger. As executors return, record their
 self-reported results. When a unit's dependencies become satisfied, dispatch it in
 the next batch.
+
+**Verify the executor tier actually landed (do not assume).** Setting `model: "haiku"`
+is a *request* — a runtime may ignore it and fall back to Sonnet or the orchestrator's
+own model, which silently erases the cost win (this has happened in real runs). For each
+executor, confirm the model it actually ran on — from its reported `model:` line and,
+where available, the run's usage/transcript — and record that **observed** model in the
+ledger, not the requested one. If an executor did **not** run on Haiku, flag it loudly in
+the report and treat the run's cost savings as unverified; do not let the ledger claim
+Haiku-tier savings for a unit that ran on Sonnet. (The dispatch flow avoids this by pinning
+Haiku in code — prefer it when cost is the priority.)
 
 ### Step 4 — Verify (tiered by criterion type — don't pay Sonnet to read passing code)
 Verification matches the criterion. **A Sonnet read is expensive (~3× Haiku);
@@ -159,6 +171,13 @@ spend it only where judgment is actually needed.**
    verification — you re-run rather than trust the executor's self-report, and it
    costs no model tokens. (For heavy/parallel gates you may delegate to a Haiku
    runner, but the orchestrator running a one-line command is cheapest.)
+
+   **The gate must be the command the project actually ships with** — `npm run build`,
+   `tsc -b && vite build`, `pytest`, `go build ./...`, etc. Do **not** accept a weaker
+   proxy that can pass while the real build fails: e.g. a bare `tsc --noEmit` is often a
+   no-op under a project-reference (`tsc -b`) setup and will report green while
+   `npm run build` errors. If unsure what the project ships, read its `package.json`
+   scripts / build config and gate on *that*.
 
 2. **Decide whether Sonnet is even needed for this unit:**
    - **All runnable criteria pass AND no assertional criteria** → mark the unit
@@ -193,8 +212,11 @@ fit together as one whole? Resolve any seams the unit-level checks couldn't see.
   the contract's ownership order).
 - **relay / layered** — assembly is a no-op; the shared artifact *is* the output.
   Your coherence pass just confirms the whole reads as one.
-Then report: what was built, the ledger summary, and an approximate note on
-tokens saved vs. building the whole spec without delegation.
+Then report: what was built, the ledger summary, and a note on tokens/cost saved vs.
+building the whole spec without delegation. **Compute that savings from the *observed*
+executor models (what each unit actually ran on), never from the intended tier** — if any
+executor fell back off Haiku (Step 3), the savings are lower than planned and the report
+must say so. An estimate is fine; an estimate that assumes a tier that didn't run is not.
 
 ## Fix-loop control (you own loop termination)
 
@@ -241,6 +263,11 @@ termination.
   with you, the orchestrator, or the loop won't terminate predictably.
 - **Vibes-based acceptance.** Every unit is judged against its written criteria,
   not a general sense of quality. If criteria are missing, the plan is incomplete.
+- **Assuming the executor ran on Haiku.** `model: "haiku"` is a request, not a
+  guarantee — verify the *observed* model per executor (Step 3) and base the cost
+  report on it. A ledger that claims Haiku savings while Sonnet actually ran is wrong.
+- **Gating on a no-op.** A green proxy command (e.g. `tsc --noEmit` under a `tsc -b`
+  project) can pass while the real `npm run build` fails. Gate on the ship command.
 - **Doing the executor's work yourself.** If you find yourself writing the unit's
   output, either the brief was wrong (fix the brief) or the task didn't need
   thrifty. Don't quietly absorb execution back into the architect session.

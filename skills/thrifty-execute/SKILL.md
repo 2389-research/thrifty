@@ -49,6 +49,7 @@ You will be told your **working dir** (`docs/thrifty/<task-slug>/`) and your
 Return a compact report:
 
 ```text
+model: <the model id you are actually running on>
 unit: <UNIT-ID>
 outputs: <files created/modified, or where the produced artifact lives>
 criteria:

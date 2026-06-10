@@ -163,16 +163,32 @@ The benchmarked architecture and the full cost/quality investigation (including 
 approaches we tried and rejected) are in [`eval/RESULTS.md`](eval/RESULTS.md); reproducible
 scripts + captured data are in [`experiments/`](experiments/README.md).
 
-## Two implementations
+## Two implementations — use dispatch by default
+
+> **Recommended: the lean dispatch flow (`thrifty-dispatch`).** It is the benchmarked
+> architecture and the one the ~64% cost claim is measured on. Reach for the subagent
+> substrate only when you specifically need per-unit *parallel* verification — and know
+> it costs materially more (see why below).
 
 - **Lean dispatch flow (benchmarked, recommended)** — `thrifty-dispatch`: Sonnet writes
-  `contract.md` + `sprints.jsonl`, one cached Haiku agent builds + self-fixes, scoped
-  Sonnet patch if needed. ~64% cheaper than Opus at equal gate quality. This is the
-  architecture diagrammed at the top.
+  `contract.md` + `sprints.jsonl`, then `dispatch.py` runs bare `claude -p` calls that
+  **hard-pin every codegen sprint to Haiku** (the plan's tier is ignored in code) and write
+  outputs to disk; the orchestrator reads only a tiny manifest. ~64% cheaper than Opus at
+  equal gate quality. This is the architecture diagrammed at the top.
 - **Subagent substrate (richer, pricier)** — the `thrifty-*` skills above (Sonnet architect
-  → parallel Haiku executor subagents → Sonnet checker). More expensive in the bake-off
-  (per-subagent harness + orchestrator context re-read); reach for it only when you need
-  per-sprint *parallel* verification. Still uses "unit/brief" terminology internally.
+  → parallel Haiku executor subagents → Sonnet checker). Reach for it only when you need
+  per-unit *parallel* verification.
+
+  **Why it costs more (structural, not a bug):** every subagent spawn carries ~40k of
+  Claude Code harness context, and each subagent's report lands back in the orchestrator's
+  context — which is then re-read every turn, so cost compounds with the number of units.
+  The dispatch flow avoids both (bare calls, outputs to disk, manifest-only reads).
+
+  **Executor-tier caveat:** unlike dispatch, this path **cannot force the executor model in
+  code** — it asks the orchestrator to dispatch with `model: "haiku"`, which a runtime may
+  silently ignore (falling back to Sonnet/the default). Verify the *actual* model each
+  executor ran on before trusting any cost figure; the ledger's savings line is an estimate,
+  not a measurement. (See `thrifty-plan` / `thrifty`'s "verify the executor model" step.)
 
 ## Status
 
