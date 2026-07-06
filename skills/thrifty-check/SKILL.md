@@ -1,11 +1,9 @@
 ---
 name: thrifty-check
 description: >
-  Checker subskill for thrifty. Verifies one completed unit against its acceptance
-  criteria, attempts a surgical fix for small localized defects, and returns a
-  structured verdict that diagnoses the failure so the orchestrator can route it.
-  Do not invoke directly — dispatched as a Sonnet subagent by the thrifty
-  orchestrator.
+  Do not invoke directly — dispatched as a Sonnet subagent by the thrifty orchestrator.
+  Verifies one unit against its acceptance criteria and returns a structured verdict for
+  the orchestrator to route.
 ---
 
 # thrifty-check — verify one unit

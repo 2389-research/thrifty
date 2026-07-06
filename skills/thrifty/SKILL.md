@@ -1,16 +1,10 @@
 ---
 name: thrifty
 description: >
-  Use when the user says "thrifty", "delegate this", "tiered build", or asks to
-  execute a spec cheaply. thrifty takes a spec you already have (written by hand or by
-  any model — thrifty doesn't care which) and EXECUTES it for less. Orchestrates a
-  tiered-delegation run: the architect (Sonnet) refines the spec into a contract that
-  pins every cross-cutting decision, ONE cached Haiku executor subagent builds the whole
-  ordered unit list in a single session (gate in-loop, self-fixing — not one subagent per
-  unit), and Sonnet verifies/fixes only where a test can't judge. Works for code
-  and non-code tasks alike. PREFER the lean dispatch flow (thrifty-dispatch) by default —
-  it is the benchmarked, cheapest path; THIS subagent substrate is the richer, pricier
-  fallback.
+  Executes a spec via tiered model delegation (Sonnet plans, Haiku builds). Use when the
+  user says "thrifty", "delegate this", "tiered build", or asks to execute a spec cheaply.
+  Prefer the lean dispatch flow (thrifty-dispatch) by default — it is the benchmarked,
+  cheapest path; this subagent substrate is the richer, pricier fallback.
 ---
 
 # thrifty — tiered delegation

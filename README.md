@@ -2,7 +2,7 @@
 
 **Tiered-delegation task execution for Claude Code.** A planner model writes the spec
 into sprints, a cheap model executes and self-verifies against the gate — same gate
-quality as the strong model, **~64% cheaper** (≈⅓ the cost) ([benchmarked](https://github.com/2389-research/thrifty/blob/main/eval/RESULTS.md)).
+quality as the strong model, **~64% cheaper** (measured 2026-05, see [eval/RESULTS.md](https://github.com/2389-research/thrifty/blob/main/eval/RESULTS.md); the gap narrowed to ~43% on large tasks after price changes).
 
 > Offload each sprint of work to the **weakest model that can do it correctly.**
 
@@ -31,7 +31,7 @@ spec ──▶ Sonnet  writes contract (pins cross-sprint + genuinely-ambiguous 
                  the Haiku agent self-fixed to green on all 7 tasks)
 ```
 
-**Result: ~64% cheaper than Opus building the same spec, at equal gate quality** — on
+**Result: ~64% cheaper than Opus building the same spec at equal gate quality (measured 2026-05, see [eval/RESULTS.md](https://github.com/2389-research/thrifty/blob/main/eval/RESULTS.md); the gap narrowed to ~43% on large tasks after price changes)** — on
 *large, multi-unit* builds (the win grows with size). On trivial builds the planning
 overhead makes thrifty cost *more* than a single capable agent, so there's a crossover
 below which you should just use one strong model directly (see [Usage](#usage)). Two
@@ -76,9 +76,9 @@ thrifty generalizes three existing systems to arbitrary tasks:
 
 Where `local_code_gen` writes 600-line byte-pinned contracts for a tiny local
 model (qwen3.6 / gemma), thrifty deliberately sits well above that floor. **Haiku
-is far stronger**, so the contract pins only what is *cross-sprint AND genuinely
+is far stronger**, so the contract pins only what is *cross-unit AND genuinely
 ambiguous* — the seams, not the interiors. Since the planner's (Sonnet) output is the
-expensive part, terseness is the goal: pin the few decisions two capable sprints
+expensive part, terseness is the goal: pin the few decisions two capable units of work
 would otherwise diverge on, and let Haiku infer the rest.
 
 ## Skills
@@ -95,18 +95,18 @@ would otherwise diverge on, and let Haiku infer the rest.
 ## Planning tiers (who writes the briefs)
 
 - **direct** — the architect writes the contract *and* every brief. Fewest moving
-  parts, one translation boundary. Best for **few sprints / subtle,
+  parts, one translation boundary. Best for **few units / subtle,
   correctness-critical work**.
 - **split** — the architect (director) writes the contract + terse unit specs;
   parallel **Sonnet** brief-writers expand them (mirrors `local_code_gen`'s
   contract → sprint flow). Brief-writing runs in parallel and the architect's context
-  stays lean. Best for **many sprints (≳ 6) / mechanical briefs / scale**.
-- **hybrid** — the architect writes the 1–2 subtle sprints' briefs, delegates the routine rest.
+  stays lean. Best for **many units (≳ 6) / mechanical briefs / scale**.
+- **hybrid** — the architect writes the 1–2 subtle units' briefs, delegates the routine rest.
 
-Rough rule: direct below ~5 sprints, split above — but it's per-task, and the subtle
-sprints can stay direct even in a split run. Authority follows the tier: the architect
-owns the contract (cross-sprint), the brief-writer owns its unit (within-sprint), so a
-within-sprint fix stays with a Sonnet brief-writer and only contract defects reach the
+Rough rule: direct below ~5 units, split above — but it's per-task, and the subtle
+units can stay direct even in a split run. Authority follows the tier: the architect
+owns the contract (cross-unit), the brief-writer owns its unit (within-unit), so a
+within-unit fix stays with a Sonnet brief-writer and only contract defects reach the
 architect.
 
 ## Usage
@@ -121,7 +121,7 @@ the task genuinely needs per-unit *parallel* verification. Cost ordering, measur
 makes either thrifty flow cost *more* than just one capable agent — so below ~a few real
 units, skip thrifty.** The `thrifty` skill now points the agent at dispatch by default.
 
-For the subagent flow, the orchestrator will: frame the goal, plan (write `CONTRACT.md` + per-sprint briefs
+For the subagent flow, the orchestrator will: frame the goal, plan (write `CONTRACT.md` + per-unit briefs
 with acceptance criteria, confirmed with you), dispatch Haiku executors in parallel
 where dependencies allow, **verify each unit by criterion type** (run the gate for
 runnable criteria; spend a Sonnet read only when a gate fails or there are
@@ -148,14 +148,14 @@ Artifacts land in `docs/thrifty/<task-slug>/` (`CONTRACT.md`, `briefs/`,
 Not every task is "one file per agent." The architect picks a mode by how cohesive
 the final artifact must be:
 
-- **partition** — sprints own separate regions/files, run in **parallel**, architect
-  merges. Best for separable outputs (code files, doc sections).
+- **partition** — units own separate regions/files, run in **parallel** (in the dispatch
+  flow: within dependency waves), architect merges. Best for separable outputs (code files, doc sections).
 - **relay** — one shared artifact extended segment by segment, **sequentially**,
   each agent reading the artifact-so-far. Best for flowing prose (a story chapter).
 - **layered** — role-specialized passes over the whole artifact (draft → continuity
   edit → polish), **sequentially**. Best for one seamless voice via multiple lenses.
 
-A single artifact with no cross-sprint seams skips the contract entirely — one brief,
+A single artifact with no cross-unit seams skips the contract entirely — one brief,
 one execute, one check (or just don't use thrifty).
 
 ## Fix loop (bounded, terminates)
@@ -179,7 +179,7 @@ scripts + captured data are in [`experiments/`](https://github.com/2389-research
 ## Two implementations — use dispatch by default
 
 > **Recommended: the lean dispatch flow (`thrifty-dispatch`).** It is the benchmarked
-> architecture and the one the ~64% cost claim is measured on. Reach for the subagent
+> architecture and the one the ~64% cost claim is measured on (measured 2026-05; narrowed to ~43% on large tasks after price changes — see [eval/RESULTS.md](https://github.com/2389-research/thrifty/blob/main/eval/RESULTS.md)). Reach for the subagent
 > substrate only when you specifically need per-unit *parallel* verification — and know
 > it costs materially more (see why below).
 
@@ -187,7 +187,7 @@ scripts + captured data are in [`experiments/`](https://github.com/2389-research
   `contract.md` + `sprints.jsonl`, then `dispatch.py` runs bare `claude -p` calls that
   **hard-pin every codegen sprint to Haiku** (the plan's tier is ignored in code) and write
   outputs to disk; the orchestrator reads only a tiny manifest. ~64% cheaper than Opus at
-  equal gate quality. This is the architecture diagrammed at the top.
+  equal gate quality (measured 2026-05, see [eval/RESULTS.md](https://github.com/2389-research/thrifty/blob/main/eval/RESULTS.md); the gap narrowed to ~43% on large tasks after price changes). This is the architecture diagrammed at the top.
 - **Subagent substrate (richer, pricier)** — the `thrifty-*` skills above (Sonnet architect
   → parallel Haiku executor subagents → Sonnet checker). Reach for it only when you need
   per-unit *parallel* verification.
@@ -208,6 +208,6 @@ scripts + captured data are in [`experiments/`](https://github.com/2389-research
 ## Status
 
 v0.1 — **benchmarked.** The lean dispatch flow is ~64% cheaper than Opus building the same
-spec, at equal gate quality, across 7 tasks (JS / Python / Go / prose). Evidence:
+spec at equal gate quality (measured 2026-05, see [eval/RESULTS.md](https://github.com/2389-research/thrifty/blob/main/eval/RESULTS.md); the gap narrowed to ~43% on large tasks after price changes), across 7 tasks (JS / Python / Go / prose). Evidence:
 [`eval/RESULTS.md`](https://github.com/2389-research/thrifty/blob/main/eval/RESULTS.md) (main findings + full journey) and
 [`experiments/`](https://github.com/2389-research/thrifty/blob/main/experiments/README.md) (reproducible scripts + captured cost data).

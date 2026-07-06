@@ -1,11 +1,9 @@
 ---
 name: thrifty-brief
 description: >
-  Brief-writer subskill for thrifty's split planning mode. Expands ONE terse unit
-  spec (from the architect/director) plus the shared contract into a full, self-contained
-  BRIEF with right-sized approach and concrete acceptance criteria. Has authority
-  WITHIN its unit only; never re-decides anything the contract already pins. Do not
-  invoke directly — dispatched as a Sonnet subagent by the thrifty orchestrator.
+  Do not invoke directly — dispatched as a Sonnet subagent by the thrifty orchestrator
+  (split planning mode). Expands one terse unit spec into a full self-contained brief
+  with right-sized approach and concrete acceptance criteria.
 ---
 
 # thrifty-brief — write one unit's brief (Sonnet, within-unit authority)

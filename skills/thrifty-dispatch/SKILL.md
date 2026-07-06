@@ -1,12 +1,10 @@
 ---
 name: thrifty-dispatch
 description: >
-  Lean tiered-build orchestrator (JSONL-dispatch architecture). Use for "thrifty
-  fast / lean / dispatch", or a multi-sprint build where cost matters. The architect
-  (Sonnet) writes a contract + a sprints.jsonl and calls a dispatch SCRIPT that loops
-  cheap bare model calls (claude -p --bare, subscription, no API key) to write each
-  sprint to disk — NO subagents. The orchestrator never ingests sprint outputs, only a
-  manifest, so its context stays tiny. Then it runs the gate and surgical-fixes.
+  Lean tiered-build orchestrator for multi-unit builds where cost matters. Use when the
+  user says "thrifty fast", "lean", or "dispatch", or asks for a multi-sprint build
+  prioritizing low cost. Requires python3 on PATH and the ability to spawn bare
+  claude -p subprocesses.
 ---
 
 # thrifty-dispatch — write JSONL, dispatch, verify (the lean architecture)
@@ -93,7 +91,7 @@ in one edit. That is the loop working as designed.
   or read files — that's the orchestrator's job at the gate.
 - **Confirm model routing** in a new environment once: `claude -p "hi" --model haiku
   --bare --output-format json` should cost ~$0.002 (Haiku rate), not ~$0.05+ (a fallback
-  to a bigger model). Verified working as of this writing.
+  to a bigger model). Verified working as of 2026-07.
 - **Keep the contract lean and your own turns few** — the orchestrator's context ×
   turns is the cost that this architecture exists to minimize. Write the two files,
   call the script, read the manifest, gate, fix. Don't re-read artifacts.
