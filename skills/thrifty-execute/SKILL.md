@@ -1,10 +1,9 @@
 ---
 name: thrifty-execute
 description: >
-  Executor subskill for thrifty. ONE cached agent that builds an ordered list of units
-  from their briefs in a single session — honoring the shared contract, running the gate,
-  and self-fixing — then reports per-unit results. (Also handles the degenerate single-unit
-  case.) Do not invoke directly — dispatched as a Haiku subagent by the thrifty orchestrator.
+  Do not invoke directly — dispatched as a Haiku subagent by the thrifty orchestrator.
+  Builds an ordered list of units in one cached session, running the gate and self-fixing,
+  then reports per-unit results.
 ---
 
 # thrifty-execute — build the assigned unit list (one cached session)

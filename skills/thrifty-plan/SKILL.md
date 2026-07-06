@@ -1,10 +1,8 @@
 ---
 name: thrifty-plan
 description: >
-  Planning discipline for thrifty, run by the architect (Sonnet) itself. Decomposes
-  a task into units, writes CONTRACT.md (cross-unit decisions + dependency graph),
-  one self-contained BRIEF per unit with concrete acceptance criteria, and
-  initializes the LEDGER. Invoked by the thrifty orchestrator during the Plan step.
+  Do not invoke directly — run by the thrifty architect (Sonnet) during the Plan step.
+  Writes CONTRACT.md, per-unit briefs, and an initialized LEDGER.
 ---
 
 # thrifty-plan — the architect's planning discipline
@@ -16,7 +14,7 @@ so no executor ever has to.
 
 Work in this order. Persist everything to `docs/thrifty/<task-slug>/`.
 
-## 0. First: is this even an thrifty job?
+## 0. First: is this even a thrifty job?
 
 thrifty's machinery (contract + briefs + ledger) exists **only to keep multiple
 units consistent**. Before planning, check the shape of the work:
